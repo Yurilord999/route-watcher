@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">RouteWatcher</string>
+    <string name="settings_title">Einstellungen</string>
+    <string name="add_route">Route hinzufügen</string>
+    <string name="no_routes_yet">Noch keine Routen. Tippe auf +, um eine hinzuzufügen.</string>
+    <string name="route_name">Routenname</string>
+    <string name="origin_address">Startadresse</string>
+    <string name="destination_address">Zieladresse</string>
+    <string name="save_route">Route speichern</string>
+    <string name="cancel">Abbrechen</string>
+    <string name="api_key_label">Google Maps API-Schlüssel</string>
+    <string name="back">Zurück</string>
+</resources>
