@@ -12,6 +12,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.lifecycleScope
 import com.routewatcher.app.data.AppDatabase
 import com.routewatcher.app.data.RouteEntity
+import com.routewatcher.app.data.SettingsStore
 import com.routewatcher.app.ui.AddEditRouteScreen
 import com.routewatcher.app.ui.RouteListScreen
 import com.routewatcher.app.ui.SettingsScreen
@@ -31,11 +32,13 @@ class MainActivity : ComponentActivity() {
 
         // Database instance for whole activity lifetime
         val dao = AppDatabase.get(this).routeDao()
+        val settingsStore = SettingsStore(this)
 
         setContent {
             RouteWatcherTheme {
                 var screen by remember { mutableStateOf<Screen>(Screen.List) }
                 val routes by dao.observeAll().collectAsState(initial = emptyList())
+                var apiKey by remember { mutableStateOf(settingsStore.getApiKey()) }
 
                 when (val currentScreen = screen) {
                     is Screen.List -> RouteListScreen(
@@ -59,6 +62,15 @@ class MainActivity : ComponentActivity() {
                         onCancel = { screen = Screen.List },
                     )
                     is Screen.Settings -> SettingsScreen(
+                        currentKey = apiKey,
+                        onSaveKey = { key ->
+                            settingsStore.setApiKey(key)
+                            apiKey = key
+                        },
+                        onClearKey = {
+                            settingsStore.clearApiKey()
+                            apiKey = null
+                        },
                         onBack = { screen = Screen.List },
                     )
                 }

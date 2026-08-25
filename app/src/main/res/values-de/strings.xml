@@ -11,4 +11,8 @@
     <string name="api_key_label">Google Maps API-Schlüssel</string>
     <string name="back">Zurück</string>
     <string name="delete_route">Route löschen</string>
+    <string name="show_key">Schlüssel anzeigen</string>
+    <string name="hide_key">Schlüssel verbergen</string>
+    <string name="save_key">Schlüssel speichern</string>
+    <string name="clear_key">Schlüssel löschen</string>
 </resources>

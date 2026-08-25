@@ -11,4 +11,8 @@
     <string name="api_key_label">Google Maps API key</string>
     <string name="back">Back</string>
     <string name="delete_route">Delete route</string>
+    <string name="show_key">Show key</string>
+    <string name="hide_key">Hide key</string>
+    <string name="save_key">Save key</string>
+    <string name="clear_key">Clear key</string>
 </resources>

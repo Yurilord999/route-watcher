@@ -56,5 +56,6 @@ dependencies {
     implementation("androidx.compose.material:material-icons-core")
     implementation("androidx.room:room-runtime:2.8.0")
     implementation("androidx.room:room-ktx:2.8.0")
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
     ksp("androidx.room:room-compiler:2.8.0")
 }
