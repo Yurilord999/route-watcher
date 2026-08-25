@@ -10,4 +10,5 @@
     <string name="cancel">Cancel</string>
     <string name="api_key_label">Google Maps API key</string>
     <string name="back">Back</string>
+    <string name="delete_route">Delete route</string>
 </resources>

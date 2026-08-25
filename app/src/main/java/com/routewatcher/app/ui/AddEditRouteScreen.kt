@@ -7,16 +7,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.routewatcher.app.R
+import com.routewatcher.app.data.RouteEntity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEditRouteScreen(
-    onSave: () -> Unit,
+    existing: RouteEntity?,
+    onSave: (RouteEntity) -> Unit,
+    onDelete: (() -> Unit)?,
     onCancel: () -> Unit,
 ) {
-    var name by remember { mutableStateOf("") }
-    var origin by remember { mutableStateOf("") }
-    var destination by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf(existing?.name ?: "") }
+    var origin by remember { mutableStateOf(existing?.originAddress ?: "") }
+    var destination by remember { mutableStateOf(existing?.destinationAddress ?: "") }
 
     Scaffold(
         topBar = { TopAppBar(title = { Text(stringResource(R.string.add_route)) }) },
@@ -52,7 +55,16 @@ fun AddEditRouteScreen(
             Spacer(Modifier.height(24.dp))
 
             Button(
-                onClick = onSave,
+                onClick = {
+                    onSave(
+                        RouteEntity(
+                            id = existing?.id ?: 0,
+                            name = name.ifBlank { "Route" },
+                            originAddress = origin,
+                            destinationAddress = destination,
+                            ),
+                        )
+                    },
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(stringResource(R.string.save_route))
@@ -64,6 +76,19 @@ fun AddEditRouteScreen(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(stringResource(R.string.cancel))
+            }
+
+            if (onDelete != null) {
+                Spacer(Modifier.height(8.dp))
+                TextButton(
+                    onClick = onDelete,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(
+                        stringResource(R.string.delete_route),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
             }
         }
     }
