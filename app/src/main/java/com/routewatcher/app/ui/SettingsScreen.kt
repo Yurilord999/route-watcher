@@ -16,6 +16,8 @@ fun SettingsScreen(
     currentKey: String?,
     onSaveKey: (String) -> Unit,
     onClearKey: () -> Unit,
+    onTestKey: () -> Unit,
+    testResultMessage: String?,
     onBack: () -> Unit,
 ) {
     var keyInput by remember { mutableStateOf(currentKey ?: "") }
@@ -57,6 +59,18 @@ fun SettingsScreen(
                 ) {
                     Text(stringResource(R.string.clear_key))
                 }
+            }
+            Spacer(Modifier.height(24.dp))
+
+            OutlinedButton(
+                onClick = onTestKey,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(R.string.test_key))
+            }
+            testResultMessage?.let {
+                Spacer(Modifier.height(8.dp))
+                Text(it, style = MaterialTheme.typography.bodyMedium)
             }
             Spacer(Modifier.height(24.dp))
 

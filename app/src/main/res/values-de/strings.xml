@@ -15,4 +15,5 @@
     <string name="hide_key">Schlüssel verbergen</string>
     <string name="save_key">Schlüssel speichern</string>
     <string name="clear_key">Schlüssel löschen</string>
+    <string name="test_key">Schlüssel testen</string>
 </resources>

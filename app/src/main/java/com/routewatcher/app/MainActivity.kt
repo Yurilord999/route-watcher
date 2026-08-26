@@ -17,8 +17,10 @@ import com.routewatcher.app.ui.AddEditRouteScreen
 import com.routewatcher.app.ui.RouteListScreen
 import com.routewatcher.app.ui.SettingsScreen
 import com.routewatcher.app.ui.theme.RouteWatcherTheme
+import com.routewatcher.app.network.DistanceMatrixClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private sealed class Screen {
     data object List : Screen()
@@ -39,6 +41,7 @@ class MainActivity : ComponentActivity() {
                 var screen by remember { mutableStateOf<Screen>(Screen.List) }
                 val routes by dao.observeAll().collectAsState(initial = emptyList())
                 var apiKey by remember { mutableStateOf(settingsStore.getApiKey()) }
+                var testResult by remember { mutableStateOf<String?>(null) }
 
                 when (val currentScreen = screen) {
                     is Screen.List -> RouteListScreen(
@@ -71,6 +74,24 @@ class MainActivity : ComponentActivity() {
                             settingsStore.clearApiKey()
                             apiKey = null
                         },
+                        onTestKey = {
+                            val key = settingsStore.getApiKey()
+                            lifecycleScope.launch(Dispatchers.IO) {
+                                val result = DistanceMatrixClient.checkTraffic(
+                                    "Dresden Hauptbahnhof, Dresden",
+                                    "Frauenkirche Dresden, Dresden",
+                                    key ?: "",
+                                )
+                                withContext(Dispatchers.Main) {
+                                    testResult = if (result.success) {
+                                        "Key works. Test route: ${result.trafficDurationMinutes} min."
+                                    } else {
+                                        "Test failed: ${result.errorMessage}"
+                                    }
+                                }
+                            }
+                        },
+                        testResultMessage = testResult,
                         onBack = { screen = Screen.List },
                     )
                 }
