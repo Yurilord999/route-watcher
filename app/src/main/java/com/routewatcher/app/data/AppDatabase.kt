@@ -5,7 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [RouteEntity::class], version = 1, exportSchema = false)
+@Database(entities = [RouteEntity::class], version = 2, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun routeDao(): RouteDao
@@ -21,7 +21,14 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "routewatcher.db",
-                ).build().also { INSTANCE = it }
+                )
+                    // Pre-release schema change (added scheduling columns)
+                    // Fine to recreate DB rather than write a real migration for now
+                    // TODO: replace with real Migration objects please, can't be asked atm
+                    // this wipes all saved routes on every future schema bump, which is fine
+                    // now but would be a silent data loss bug later?
+                    .fallbackToDestructiveMigration()
+                    .build().also { INSTANCE = it }
             }
     }
 }
