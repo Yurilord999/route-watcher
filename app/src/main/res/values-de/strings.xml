@@ -16,4 +16,8 @@
     <string name="save_key">Schlüssel speichern</string>
     <string name="clear_key">Schlüssel löschen</string>
     <string name="test_key">Schlüssel testen</string>
+    <string name="departure_hour">Stunde (0-23)</string>
+    <string name="departure_minute">Minute</string>
+    <string name="check_offsets">Minuten vorher prüfen (z.B. 60,30,10)</string>
+    <string name="delay_threshold">Warnen ab Verzögerung (Min)</string>
 </resources>

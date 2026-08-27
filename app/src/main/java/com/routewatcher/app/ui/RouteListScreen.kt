@@ -22,6 +22,7 @@ fun RouteListScreen(
     routes: List<RouteEntity>,
     onAddRoute: () -> Unit,
     onEditRoute: (RouteEntity) -> Unit,
+    onToggleRoute: (RouteEntity, Boolean) -> Unit,
     onOpenSettings: () -> Unit
 ){
     Scaffold(
@@ -63,16 +64,26 @@ fun RouteListScreen(
                         .fillMaxSize(),
             ) {
                 items(routes, key = { it.id }) { route ->
-                    Column(
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { onEditRoute(route) }
                             .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text(route.name, style = MaterialTheme.typography.titleMedium)
-                        Text(
-                            "${route.originAddress} -> ${route.destinationAddress}",
-                            style = MaterialTheme.typography.bodySmall,
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { onEditRoute(route) },
+                        ) {
+                            Text(route.name, style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                "${route.originAddress} -> ${route.destinationAddress}",
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                        Switch(
+                            checked = route.enabled,
+                            onCheckedChange = { onToggleRoute(route, it) },
                         )
                     }
                     HorizontalDivider()

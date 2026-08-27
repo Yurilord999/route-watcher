@@ -20,6 +20,10 @@ fun AddEditRouteScreen(
     var name by remember { mutableStateOf(existing?.name ?: "") }
     var origin by remember { mutableStateOf(existing?.originAddress ?: "") }
     var destination by remember { mutableStateOf(existing?.destinationAddress ?: "") }
+    var hour by remember { mutableStateOf((existing?.departureHour ?: 8).toString()) }
+    var minute by remember { mutableStateOf((existing?.departureMinute ?: 0).toString()) }
+    var offsets by remember { mutableStateOf(existing?.checkOffsetsMinutes ?: "30") }
+    var threshold by remember { mutableStateOf((existing?.delayThresholdMinutes ?: 10).toString()) }
 
     Scaffold(
         topBar = { TopAppBar(title = { Text(stringResource(R.string.add_route)) }) },
@@ -54,6 +58,39 @@ fun AddEditRouteScreen(
             )
             Spacer(Modifier.height(24.dp))
 
+            Row {
+                OutlinedTextField(
+                    value = hour,
+                    onValueChange = { hour = it.filter { c -> c.isDigit() } },
+                    label = { Text(stringResource(R.string.departure_hour)) },
+                    modifier = Modifier.weight(1f),
+                )
+                Spacer(Modifier.width(8.dp))
+                OutlinedTextField(
+                    value = minute,
+                    onValueChange = { minute = it.filter { c -> c.isDigit() } },
+                    label = { Text(stringResource(R.string.departure_minute)) },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = offsets,
+                onValueChange = { offsets = it },
+                label = { Text(stringResource(R.string.check_offsets)) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = threshold,
+                onValueChange = { threshold = it.filter { c -> c.isDigit() } },
+                label = { Text(stringResource(R.string.delay_threshold)) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(Modifier.height(24.dp))
+
             Button(
                 onClick = {
                     onSave(
@@ -62,6 +99,12 @@ fun AddEditRouteScreen(
                             name = name.ifBlank { "Route" },
                             originAddress = origin,
                             destinationAddress = destination,
+                            departureHour = hour.toIntOrNull()?.coerceIn(0, 23) ?: 8,
+                            departureMinute = minute.toIntOrNull()?.coerceIn(0, 59) ?: 0,
+                            checkOffsetsMinutes = offsets.ifBlank { "30" },
+                            delayThresholdMinutes = threshold.toIntOrNull() ?: 10,
+                            activeDays = existing?.activeDays ?: 0b1111100,
+                            enabled = existing?.enabled ?: false,
                             ),
                         )
                     },

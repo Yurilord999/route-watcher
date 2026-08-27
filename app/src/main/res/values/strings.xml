@@ -16,4 +16,8 @@
     <string name="save_key">Save key</string>
     <string name="clear_key">Clear key</string>
     <string name="test_key">Test key now</string>
+    <string name="departure_hour">Hour (0-23)</string>
+    <string name="departure_minute">Minute</string>
+    <string name="check_offsets">Check minutes before (e.g. 60,30,10)</string>
+    <string name="delay_threshold">Alert if delay is at least (min)</string>
 </resources>

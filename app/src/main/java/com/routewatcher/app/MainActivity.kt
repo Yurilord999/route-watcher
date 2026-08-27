@@ -1,6 +1,11 @@
 package com.routewatcher.app
 
 import android.os.Bundle
+import android.os.Build
+import android.app.AlarmManager
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -18,9 +23,12 @@ import com.routewatcher.app.ui.RouteListScreen
 import com.routewatcher.app.ui.SettingsScreen
 import com.routewatcher.app.ui.theme.RouteWatcherTheme
 import com.routewatcher.app.network.DistanceMatrixClient
+import com.routewatcher.app.alarm.AlarmScheduler
+import com.routewatcher.app.alarm.NotificationHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
 
 private sealed class Screen {
     data object List : Screen()
@@ -31,6 +39,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        NotificationHelper.ensureChannels(this)
 
         // Database instance for whole activity lifetime
         val dao = AppDatabase.get(this).routeDao()
@@ -48,16 +57,33 @@ class MainActivity : ComponentActivity() {
                         routes = routes,
                         onAddRoute = { screen = Screen.AddEdit(null) },
                         onEditRoute = { screen = Screen.AddEdit(it) },
+                        onToggleRoute = { route, enabled ->
+                            lifecycleScope.launch(Dispatchers.IO) {
+                                val updated = route.copy(enabled = enabled)
+                                dao.upsert(updated)
+                                if (enabled) {
+                                    withContext(Dispatchers.Main) { maybeRequestExactAlarmPermission() }
+                                    AlarmScheduler.scheduleAllForRoute(this@MainActivity, updated)
+                                } else {
+                                    AlarmScheduler.cancelAllForRoute(this@MainActivity, updated.id)
+                                }
+                            }
+                        },
                         onOpenSettings = { screen = Screen.Settings },
                     )
                     is Screen.AddEdit -> AddEditRouteScreen(
                         existing = currentScreen.route,
                         onSave = { route ->
-                            lifecycleScope.launch(Dispatchers.IO) { dao.upsert(route) }
+                            lifecycleScope.launch(Dispatchers.IO) {
+                                val id = dao.upsert(route)
+                                val saved = route.copy(id = if (route.id == 0L) id else route.id)
+                                AlarmScheduler.scheduleAllForRoute(this@MainActivity, saved)
+                            }
                             screen = Screen.List
                         },
                         onDelete = currentScreen.route?.let { existing ->
                             {
+                                AlarmScheduler.cancelAllForRoute(this@MainActivity, existing.id)
                                 lifecycleScope.launch(Dispatchers.IO) { dao.delete(existing) }
                                 screen = Screen.List
                             }
@@ -95,6 +121,19 @@ class MainActivity : ComponentActivity() {
                         onBack = { screen = Screen.List },
                     )
                 }
+            }
+        }
+    }
+    // On Android 12+, exact alarms require an explicit user grant via system settings
+    private fun maybeRequestExactAlarmPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val alarmManager = getSystemService(AlarmManager::class.java)
+            if (!alarmManager.canScheduleExactAlarms()) {
+                startActivity(
+                    Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                        data = Uri.parse("package:$packageName")
+                    },
+                )
             }
         }
     }
