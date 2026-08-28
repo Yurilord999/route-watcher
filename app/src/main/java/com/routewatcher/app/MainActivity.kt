@@ -4,17 +4,21 @@ import android.os.Bundle
 import android.os.Build
 import android.app.AlarmManager
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
+import android.Manifest
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.lifecycleScope
+import androidx.core.content.ContextCompat
 import com.routewatcher.app.data.AppDatabase
 import com.routewatcher.app.data.RouteEntity
 import com.routewatcher.app.data.SettingsStore
@@ -36,10 +40,15 @@ private sealed class Screen {
     data object Settings : Screen()
 }
 class MainActivity : ComponentActivity() {
+
+    private val notifPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* no-op either way */ }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         NotificationHelper.ensureChannels(this)
+        requestNotificationPermissionIfNeeded()
 
         // Database instance for whole activity lifetime
         val dao = AppDatabase.get(this).routeDao()
@@ -134,6 +143,16 @@ class MainActivity : ComponentActivity() {
                         data = Uri.parse("package:$packageName")
                     },
                 )
+            }
+        }
+    }
+    // On Android 13+, showing notifications requires an explicit runtime grant too
+    private fun requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val granted = ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) ==
+                PackageManager.PERMISSION_GRANTED
+            if (!granted) {
+                notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
     }
