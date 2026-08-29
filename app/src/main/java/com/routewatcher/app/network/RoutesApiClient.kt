@@ -5,11 +5,11 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
+import org.json.JSONArray
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 
 // One selectable road option returned by computeRoutes with alternatives
-
 data class RouteOption(
 
     // Generic label ("Route 1")
@@ -26,6 +26,7 @@ data class RouteOption(
 
 object RoutesApiClient {
 
+    // ---- setup / config ----
     private val client = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(15, TimeUnit.SECONDS)
@@ -33,6 +34,8 @@ object RoutesApiClient {
 
     private const val BASE_URL = "https://routes.googleapis.com/directions/v2:computeRoutes"
     private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
+
+    // ---- public API ----
 
     fun fetchRouteAlternatives(origin: String, destination: String, apiKey: String): List<RouteOption> {
         if (apiKey.isBlank()) return emptyList()
@@ -62,6 +65,58 @@ object RoutesApiClient {
         }
     }
 
+    // TODO: called by TrafficCheckReceiver/CheckNowActionReceiver once it's wired properly
+    // replacing DistanceMatrixClient.checkTraffic calls
+    // Pins the check to a specific physical road by forcing the route to be selected
+    fun checkTrafficOnRoute(
+        origin: String,
+        destination: String,
+        waypoints: List<Pair<Double, Double>>,
+        apiKey: String,
+    ): TrafficResult {
+        if (apiKey.isBlank()) return TrafficResult(success = false, errorMessage = "No API key set")
+
+        val body = JSONObject().apply {
+            put("origin", JSONObject().put("address", origin))
+            put("destination", JSONObject().put("address", destination))
+            put("travelMode", "DRIVE")
+            put("routingPreference", "TRAFFIC_AWARE")
+            put("departureTime", Instant.now().toString())
+            if (waypoints.isNotEmpty()) {
+                val intermediates = JSONArray()
+                waypoints.forEach { (lat, lng) ->
+                    intermediates.put(
+                        JSONObject().apply {
+                            put(
+                                "location",
+                                JSONObject().put(
+                                    "latLng",
+                                    JSONObject().put("latitude", lat).put("longitude", lng),
+                                ),
+                            )
+                            put("via", true)
+                        },
+                    )
+                }
+                put("intermediates", intermediates)
+            }
+        }
+
+        val request = buildRequest(body, fieldMask = "routes.duration,routes.staticDuration", apiKey = apiKey)
+
+        return try {
+            client.newCall(request).execute().use { response ->
+                val responseBody = response.body?.string()
+                    ?: return TrafficResult(false, errorMessage = "Empty response")
+                parseTraffic(responseBody)
+            }
+        } catch (e: Exception) {
+            TrafficResult(success = false, errorMessage = e.message ?: "Network error")
+        }
+    }
+
+    // ---- shared request building ----
+
     private fun buildRequest(body: JSONObject, fieldMask: String, apiKey: String): Request =
         Request.Builder()
             .url(BASE_URL)
@@ -70,6 +125,8 @@ object RoutesApiClient {
             .addHeader("X-Goog-FieldMask", fieldMask)
             .post(body.toString().toRequestBody(JSON_MEDIA_TYPE))
             .build()
+
+    // ---- response parsing (one per public function above) ----
 
     private fun parseAlternatives(responseBody: String): List<RouteOption> {
         val json = JSONObject(responseBody)
@@ -95,11 +152,36 @@ object RoutesApiClient {
         return result
     }
 
+    private fun parseTraffic(responseBody: String): TrafficResult {
+        val json = JSONObject(responseBody)
+        val routes = json.optJSONArray("routes")
+        if (routes == null || routes.length() == 0) {
+            return TrafficResult(success = false, errorMessage = "No route returned")
+        }
+        val route = routes.getJSONObject(0)
+
+        val staticSeconds = parseSecondsField(route.optString("staticDuration", "0s"))
+        val trafficSeconds = parseSecondsField(route.optString("duration", "0s"))
+        val normalMin = staticSeconds / 60
+        val trafficMin = trafficSeconds / 60
+
+        return TrafficResult(
+            success = true,
+            normalDurationMinutes = normalMin,
+            trafficDurationMinutes = trafficMin,
+            delayMinutes = (trafficMin - normalMin).coerceAtLeast(0),
+        )
+    }
+
+    // ---- shared low-level parsing helper ----
+
     // Routes API returns durations as strings like "1371s", not the
     // {"value": N} object Distance Matrix used. (This pulls out the number)
     // Pure function, no framework dependency (unit tested)
     internal fun parseSecondsField(raw: String): Int =
         raw.removeSuffix("s").toIntOrNull() ?: 0
+
+    // ---- geometry helpers ----
 
     private fun derivePinningWaypoints(encodedPolyline: String): List<Pair<Double, Double>> {
         val decoded = decodePolyline(encodedPolyline)
