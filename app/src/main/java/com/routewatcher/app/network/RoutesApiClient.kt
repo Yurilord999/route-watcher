@@ -1,12 +1,12 @@
 package com.routewatcher.app.network
 
+import android.util.Log
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import org.json.JSONArray
-import java.time.Instant
 import java.util.concurrent.TimeUnit
 
 // One selectable road option returned by computeRoutes with alternatives
@@ -38,7 +38,10 @@ object RoutesApiClient {
     // ---- public API ----
 
     fun fetchRouteAlternatives(origin: String, destination: String, apiKey: String): List<RouteOption> {
-        if (apiKey.isBlank()) return emptyList()
+        if (apiKey.isBlank()) {
+            Log.e("RoutesApiClient", "fetchRouteAlternatives: no API key set")
+            return emptyList()
+        }
 
         val body = JSONObject().apply {
             put("origin", JSONObject().put("address", origin))
@@ -46,7 +49,6 @@ object RoutesApiClient {
             put("travelMode", "DRIVE")
             put("routingPreference", "TRAFFIC_AWARE")
             put("computeAlternativeRoutes", true)
-            put("departureTime", Instant.now().toString())
         }
 
         val request = buildRequest(
@@ -57,10 +59,19 @@ object RoutesApiClient {
 
         return try {
             client.newCall(request).execute().use { response ->
-                val responseBody = response.body?.string() ?: return emptyList()
+                val responseBody = response.body?.string()
+                if (responseBody == null) {
+                    Log.e("RoutesApiClient", "fetchRouteAlternatives: empty response body")
+                    return emptyList()
+                }
+                if (!response.isSuccessful) {
+                    Log.e("RoutesApiClient", "fetchRouteAlternatives: HTTP ${response.code} - $responseBody")
+                    return emptyList()
+                }
                 parseAlternatives(responseBody)
             }
         } catch (e: Exception) {
+            Log.e("RoutesApiClient", "fetchRouteAlternatives: request failed", e)
             emptyList()
         }
     }
@@ -81,7 +92,6 @@ object RoutesApiClient {
             put("destination", JSONObject().put("address", destination))
             put("travelMode", "DRIVE")
             put("routingPreference", "TRAFFIC_AWARE")
-            put("departureTime", Instant.now().toString())
             if (waypoints.isNotEmpty()) {
                 val intermediates = JSONArray()
                 waypoints.forEach { (lat, lng) ->

@@ -15,7 +15,7 @@ fun AddEditRouteScreen(
     existing: RouteEntity?,
     onSave: (RouteEntity) -> Unit,
     onDelete: (() -> Unit)?,
-    onPickRoad: () -> Unit,
+    onPickRoad: (origin: String, destination: String) -> Unit,
     onCancel: () -> Unit,
 ) {
     var name by remember { mutableStateOf(existing?.name ?: "") }
@@ -94,7 +94,7 @@ fun AddEditRouteScreen(
 
             // test button for road selection on map
             OutlinedButton(
-                onClick = onPickRoad,
+                onClick = { onPickRoad(origin, destination)},
                 modifier = Modifier.fillMaxWidth(),
                 ) {
                 Text("Pick road on map (test - not saved yet)")

@@ -17,6 +17,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.lifecycleScope
 import androidx.core.content.ContextCompat
 import com.routewatcher.app.data.AppDatabase
@@ -29,6 +30,7 @@ import com.routewatcher.app.ui.RoutePickerScreen
 import com.routewatcher.app.ui.theme.RouteWatcherTheme
 import com.routewatcher.app.network.DistanceMatrixClient
 import com.routewatcher.app.network.RouteOption
+import com.routewatcher.app.network.RoutesApiClient
 import com.routewatcher.app.alarm.AlarmScheduler
 import com.routewatcher.app.alarm.NotificationHelper
 import kotlinx.coroutines.Dispatchers
@@ -40,9 +42,7 @@ private sealed class Screen {
     data object List : Screen()
     data class AddEdit(val route: RouteEntity?) : Screen()
     data object Settings : Screen()
-
-    // TODO: temporary, testing RoutePickerScreen with fake data
-    data object PickRoad : Screen()
+    data class PickRoad(val origin: String, val destination: String) : Screen()
 }
 class MainActivity : ComponentActivity() {
 
@@ -102,7 +102,9 @@ class MainActivity : ComponentActivity() {
                                 screen = Screen.List
                             }
                         },
-                        onPickRoad = { screen = Screen.PickRoad },
+                        onPickRoad = { origin, destination ->
+                            screen = Screen.PickRoad(origin, destination)
+                        },
                         onCancel = { screen = Screen.List },
                     )
                     is Screen.Settings -> SettingsScreen(
@@ -135,12 +137,31 @@ class MainActivity : ComponentActivity() {
                         testResultMessage = testResult,
                         onBack = { screen = Screen.List },
                     )
-                    is Screen.PickRoad -> RoutePickerScreen(
-                        routeOptions = fakeRouteOptionsForTesting(),
-                        isLoading = false,
-                        onConfirm = { screen = Screen.List }, // TODO: wire real save once tested
-                        onCancel = { screen = Screen.List },
-                    )
+                    is Screen.PickRoad -> {
+                        var routeOptions by remember(currentScreen) { mutableStateOf<List<RouteOption>>(emptyList()) }
+                        var isLoadingRoutes by remember(currentScreen) { mutableStateOf(true) }
+
+                        LaunchedEffect(currentScreen) {
+                            isLoadingRoutes = true
+                            val key = settingsStore.getApiKey() ?: ""
+                            routeOptions = withContext(Dispatchers.IO) {
+                                RoutesApiClient.fetchRouteAlternatives(
+                                    currentScreen.origin,
+                                    currentScreen.destination,
+                                    key,
+                                )
+                            }
+                            isLoadingRoutes = false
+                        }
+
+                        RoutePickerScreen(
+                            routeOptions = routeOptions,
+                            isLoading = isLoadingRoutes,
+                            // TODO: picked road isn't saved, RouteEntity has no fields yet (waypoints/polyline/summary)
+                            onConfirm = { screen = Screen.List },
+                            onCancel = { screen = Screen.List },
+                        )
+                    }
                 }
             }
         }
@@ -169,22 +190,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
-// TODO: Delete once real wiring replaces this
-// Temporary test data to verify RoutePickerScreen
-private fun fakeRouteOptionsForTesting(): List<RouteOption> = listOf(
-    RouteOption(
-        summary = "Route 1",
-        distanceText = "12.4 km",
-        durationMinutes = 18,
-        encodedPolyline = "_p~iF~ps|U_ulLnnqC_mqNvxq`@",
-        waypoints = emptyList(),
-    ),
-    RouteOption(
-        summary = "Route 2",
-        distanceText = "14.1 km",
-        durationMinutes = 22,
-        encodedPolyline = "_p~iF~ps|U_ulLnnqC_ulLxcatB",
-        waypoints = emptyList(),
-    ),
-)
