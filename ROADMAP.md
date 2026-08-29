@@ -15,13 +15,11 @@ automatic traffic checks, manual check via widget, notifications.
 8. Widget - home-screen "Check now" button
 
 ## Next up
-Decide whether Distance Matrix route selection limitation
-needs addressing before adding more features on top of it
+Switched to Routes API client (fetching alternate roads, checking traffic on hand-picked route)
+Not used within the app yet. Next: a screen to actually pick a road.
 
 ## Known limitations / redesign considerations
-- Distance Matrix API has no way to specify or pin which physical route
-  a check runs against. Google can pick any different road between calls.
-  Might have to switch to the Directions API (supports route alternatives + pinning via waypoints)
+- Replacing Distance Matrix entirely since it is deprecated and limited in functionality 
 
 ## Improvement backlog
 - Replace raw hour/minute text fields in AddEditRouteScreen with a real time picker
