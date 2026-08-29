@@ -25,8 +25,10 @@ import com.routewatcher.app.data.SettingsStore
 import com.routewatcher.app.ui.AddEditRouteScreen
 import com.routewatcher.app.ui.RouteListScreen
 import com.routewatcher.app.ui.SettingsScreen
+import com.routewatcher.app.ui.RoutePickerScreen
 import com.routewatcher.app.ui.theme.RouteWatcherTheme
 import com.routewatcher.app.network.DistanceMatrixClient
+import com.routewatcher.app.network.RouteOption
 import com.routewatcher.app.alarm.AlarmScheduler
 import com.routewatcher.app.alarm.NotificationHelper
 import kotlinx.coroutines.Dispatchers
@@ -38,6 +40,9 @@ private sealed class Screen {
     data object List : Screen()
     data class AddEdit(val route: RouteEntity?) : Screen()
     data object Settings : Screen()
+
+    // TODO: temporary, testing RoutePickerScreen with fake data
+    data object PickRoad : Screen()
 }
 class MainActivity : ComponentActivity() {
 
@@ -97,6 +102,7 @@ class MainActivity : ComponentActivity() {
                                 screen = Screen.List
                             }
                         },
+                        onPickRoad = { screen = Screen.PickRoad },
                         onCancel = { screen = Screen.List },
                     )
                     is Screen.Settings -> SettingsScreen(
@@ -129,6 +135,12 @@ class MainActivity : ComponentActivity() {
                         testResultMessage = testResult,
                         onBack = { screen = Screen.List },
                     )
+                    is Screen.PickRoad -> RoutePickerScreen(
+                        routeOptions = fakeRouteOptionsForTesting(),
+                        isLoading = false,
+                        onConfirm = { screen = Screen.List }, // TODO: wire real save once tested
+                        onCancel = { screen = Screen.List },
+                    )
                 }
             }
         }
@@ -157,3 +169,22 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+// TODO: Delete once real wiring replaces this
+// Temporary test data to verify RoutePickerScreen
+private fun fakeRouteOptionsForTesting(): List<RouteOption> = listOf(
+    RouteOption(
+        summary = "Route 1",
+        distanceText = "12.4 km",
+        durationMinutes = 18,
+        encodedPolyline = "_p~iF~ps|U_ulLnnqC_mqNvxq`@",
+        waypoints = emptyList(),
+    ),
+    RouteOption(
+        summary = "Route 2",
+        distanceText = "14.1 km",
+        durationMinutes = 22,
+        encodedPolyline = "_p~iF~ps|U_ulLnnqC_ulLxcatB",
+        waypoints = emptyList(),
+    ),
+)
