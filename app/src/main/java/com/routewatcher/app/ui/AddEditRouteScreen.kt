@@ -8,11 +8,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.routewatcher.app.R
 import com.routewatcher.app.data.RouteEntity
+import com.routewatcher.app.network.RouteOption
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEditRouteScreen(
     existing: RouteEntity?,
+    pickedRoute: RouteOption?,
     onSave: (RouteEntity) -> Unit,
     onDelete: (() -> Unit)?,
     onPickRoad: (origin: String, destination: String) -> Unit,
@@ -25,6 +27,7 @@ fun AddEditRouteScreen(
     var minute by remember { mutableStateOf((existing?.departureMinute ?: 0).toString()) }
     var offsets by remember { mutableStateOf(existing?.checkOffsetsMinutes ?: "30") }
     var threshold by remember { mutableStateOf((existing?.delayThresholdMinutes ?: 10).toString()) }
+    val lockedRouteSummary = pickedRoute?.summary ?: existing?.lockedRouteSummary
 
     Scaffold(
         topBar = { TopAppBar(title = { Text(stringResource(R.string.add_route)) }) },
@@ -92,12 +95,17 @@ fun AddEditRouteScreen(
             )
             Spacer(Modifier.height(24.dp))
 
-            // test button for road selection on map
+            Text(
+                if (lockedRouteSummary != null) "Picked road: $lockedRouteSummary" else "No specific road picked yet",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Spacer(Modifier.height(8.dp))
+
             OutlinedButton(
                 onClick = { onPickRoad(origin, destination)},
                 modifier = Modifier.fillMaxWidth(),
                 ) {
-                Text("Pick road on map (test - not saved yet)")
+                Text(if (lockedRouteSummary != null) "Change picked road" else "Pick road on map")
                 }
             Spacer(Modifier.height(8.dp))
 
@@ -115,6 +123,10 @@ fun AddEditRouteScreen(
                             delayThresholdMinutes = threshold.toIntOrNull() ?: 10,
                             activeDays = existing?.activeDays ?: 0b1111100,
                             enabled = existing?.enabled ?: false,
+                            lockedRoutePolyline = pickedRoute?.encodedPolyline ?: existing?.lockedRoutePolyline,
+                            lockedRouteSummary = pickedRoute?.summary ?: existing?.lockedRouteSummary,
+                            lockedRouteWaypoints = pickedRoute?.let { encodeWaypoints(it.waypoints) }
+                                ?: existing?.lockedRouteWaypoints,
                             ),
                         )
                     },

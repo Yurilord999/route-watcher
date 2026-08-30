@@ -38,10 +38,18 @@ import com.routewatcher.app.network.RouteOption
 fun RoutePickerScreen(
     routeOptions: List<RouteOption>,
     isLoading: Boolean,
+    initiallySelectedPolyline: String?,
     onConfirm: (RouteOption) -> Unit,
     onCancel: () -> Unit,
 ) {
-    var selectedIndex by remember { mutableIntStateOf(0) }
+    // Match against whatever is already picked/saved
+    // Reopening the picker shows the current choice instead of defaulting to the first option
+    // Falls back to 0 if there is nothing to match / no match found
+    // TODO: bandaid, matching by polyline is not a real identity check. Live traffic routing could return a different polyline
+    var selectedIndex by remember(routeOptions) {
+        val matchedIndex = routeOptions.indexOfFirst { it.encodedPolyline == initiallySelectedPolyline }
+        mutableIntStateOf(if (matchedIndex >= 0) matchedIndex else 0)
+        }
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Pick your road") }) },
