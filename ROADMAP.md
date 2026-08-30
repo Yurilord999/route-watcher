@@ -15,11 +15,13 @@ automatic traffic checks, manual check via widget, notifications.
 8. Widget - home-screen "Check now" button
 
 ## Next up
-Switched to Routes API client (fetching alternate roads, checking traffic on hand-picked route)
-Not used within the app yet. Next: a screen to actually pick a road.
+Switched to Routes API client. Route picker screen is built and wired to real data now.
+Confirming a picked route doesn't persist yet
 
 ## Known limitations / redesign considerations
-- Replacing Distance Matrix entirely since it is deprecated and limited in functionality 
+- Replacing Distance Matrix entirely since it is deprecated and limited in functionality
+- Route picker only offers Google's suggested alternatives (no custom waypoint/detour editing)
+- Considering a ViewModel once app state outgrows RouteWatcherApp.kt. 
 
 ## Improvement backlog
 - Replace raw hour/minute text fields in AddEditRouteScreen with a real time picker

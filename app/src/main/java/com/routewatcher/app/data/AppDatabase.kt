@@ -5,7 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [RouteEntity::class], version = 2, exportSchema = false)
+@Database(entities = [RouteEntity::class], version = 3, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun routeDao(): RouteDao
@@ -27,7 +27,7 @@ abstract class AppDatabase : RoomDatabase() {
                     // TODO: replace with real Migration objects please, can't be asked atm
                     // this wipes all saved routes on every future schema bump, which is fine
                     // now but would be a silent data loss bug later?
-                    .fallbackToDestructiveMigration()
+                    .fallbackToDestructiveMigration(dropAllTables = true)
                     .build().also { INSTANCE = it }
             }
     }

@@ -12,38 +12,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.LaunchedEffect
-import androidx.lifecycle.lifecycleScope
 import androidx.core.content.ContextCompat
 import com.routewatcher.app.data.AppDatabase
-import com.routewatcher.app.data.RouteEntity
 import com.routewatcher.app.data.SettingsStore
-import com.routewatcher.app.ui.AddEditRouteScreen
-import com.routewatcher.app.ui.RouteListScreen
-import com.routewatcher.app.ui.SettingsScreen
-import com.routewatcher.app.ui.RoutePickerScreen
 import com.routewatcher.app.ui.theme.RouteWatcherTheme
-import com.routewatcher.app.network.DistanceMatrixClient
-import com.routewatcher.app.network.RouteOption
-import com.routewatcher.app.network.RoutesApiClient
-import com.routewatcher.app.alarm.AlarmScheduler
+import com.routewatcher.app.ui.RouteWatcherApp
 import com.routewatcher.app.alarm.NotificationHelper
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
-
-private sealed class Screen {
-    data object List : Screen()
-    data class AddEdit(val route: RouteEntity?) : Screen()
-    data object Settings : Screen()
-    data class PickRoad(val origin: String, val destination: String) : Screen()
-}
 class MainActivity : ComponentActivity() {
 
     private val notifPermissionLauncher =
@@ -61,108 +36,11 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             RouteWatcherTheme {
-                var screen by remember { mutableStateOf<Screen>(Screen.List) }
-                val routes by dao.observeAll().collectAsState(initial = emptyList())
-                var apiKey by remember { mutableStateOf(settingsStore.getApiKey()) }
-                var testResult by remember { mutableStateOf<String?>(null) }
-
-                when (val currentScreen = screen) {
-                    is Screen.List -> RouteListScreen(
-                        routes = routes,
-                        onAddRoute = { screen = Screen.AddEdit(null) },
-                        onEditRoute = { screen = Screen.AddEdit(it) },
-                        onToggleRoute = { route, enabled ->
-                            lifecycleScope.launch(Dispatchers.IO) {
-                                val updated = route.copy(enabled = enabled)
-                                dao.upsert(updated)
-                                if (enabled) {
-                                    withContext(Dispatchers.Main) { maybeRequestExactAlarmPermission() }
-                                    AlarmScheduler.scheduleAllForRoute(this@MainActivity, updated)
-                                } else {
-                                    AlarmScheduler.cancelAllForRoute(this@MainActivity, updated.id)
-                                }
-                            }
-                        },
-                        onOpenSettings = { screen = Screen.Settings },
-                    )
-                    is Screen.AddEdit -> AddEditRouteScreen(
-                        existing = currentScreen.route,
-                        onSave = { route ->
-                            lifecycleScope.launch(Dispatchers.IO) {
-                                val id = dao.upsert(route)
-                                val saved = route.copy(id = if (route.id == 0L) id else route.id)
-                                AlarmScheduler.scheduleAllForRoute(this@MainActivity, saved)
-                            }
-                            screen = Screen.List
-                        },
-                        onDelete = currentScreen.route?.let { existing ->
-                            {
-                                AlarmScheduler.cancelAllForRoute(this@MainActivity, existing.id)
-                                lifecycleScope.launch(Dispatchers.IO) { dao.delete(existing) }
-                                screen = Screen.List
-                            }
-                        },
-                        onPickRoad = { origin, destination ->
-                            screen = Screen.PickRoad(origin, destination)
-                        },
-                        onCancel = { screen = Screen.List },
-                    )
-                    is Screen.Settings -> SettingsScreen(
-                        currentKey = apiKey,
-                        onSaveKey = { key ->
-                            settingsStore.setApiKey(key)
-                            apiKey = key
-                        },
-                        onClearKey = {
-                            settingsStore.clearApiKey()
-                            apiKey = null
-                        },
-                        onTestKey = {
-                            val key = settingsStore.getApiKey()
-                            lifecycleScope.launch(Dispatchers.IO) {
-                                val result = DistanceMatrixClient.checkTraffic(
-                                    "Dresden Hauptbahnhof, Dresden",
-                                    "Frauenkirche Dresden, Dresden",
-                                    key ?: "",
-                                )
-                                withContext(Dispatchers.Main) {
-                                    testResult = if (result.success) {
-                                        "Key works. Test route: ${result.trafficDurationMinutes} min."
-                                    } else {
-                                        "Test failed: ${result.errorMessage}"
-                                    }
-                                }
-                            }
-                        },
-                        testResultMessage = testResult,
-                        onBack = { screen = Screen.List },
-                    )
-                    is Screen.PickRoad -> {
-                        var routeOptions by remember(currentScreen) { mutableStateOf<List<RouteOption>>(emptyList()) }
-                        var isLoadingRoutes by remember(currentScreen) { mutableStateOf(true) }
-
-                        LaunchedEffect(currentScreen) {
-                            isLoadingRoutes = true
-                            val key = settingsStore.getApiKey() ?: ""
-                            routeOptions = withContext(Dispatchers.IO) {
-                                RoutesApiClient.fetchRouteAlternatives(
-                                    currentScreen.origin,
-                                    currentScreen.destination,
-                                    key,
-                                )
-                            }
-                            isLoadingRoutes = false
-                        }
-
-                        RoutePickerScreen(
-                            routeOptions = routeOptions,
-                            isLoading = isLoadingRoutes,
-                            // TODO: picked road isn't saved, RouteEntity has no fields yet (waypoints/polyline/summary)
-                            onConfirm = { screen = Screen.List },
-                            onCancel = { screen = Screen.List },
-                        )
-                    }
-                }
+                RouteWatcherApp(
+                    dao = dao,
+                    settingsStore = settingsStore,
+                    onRequestExactAlarmPermission = { maybeRequestExactAlarmPermission() },
+                )
             }
         }
     }
