@@ -76,8 +76,6 @@ object RoutesApiClient {
         }
     }
 
-    // TODO: called by TrafficCheckReceiver/CheckNowActionReceiver once it's wired properly
-    // replacing DistanceMatrixClient.checkTraffic calls
     // Pins the check to a specific physical road by forcing the route to be selected
     fun checkTrafficOnRoute(
         origin: String,

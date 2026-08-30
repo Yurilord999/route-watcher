@@ -18,7 +18,6 @@ import com.routewatcher.app.alarm.AlarmScheduler
 import com.routewatcher.app.data.RouteDao
 import com.routewatcher.app.data.RouteEntity
 import com.routewatcher.app.data.SettingsStore
-import com.routewatcher.app.network.DistanceMatrixClient
 import com.routewatcher.app.network.RouteOption
 import com.routewatcher.app.network.RoutesApiClient
 import kotlinx.coroutines.Dispatchers
@@ -145,9 +144,10 @@ fun RouteWatcherApp(
             onTestKey = {
                 val key = settingsStore.getApiKey()
                 scope.launch(Dispatchers.IO) {
-                    val result = DistanceMatrixClient.checkTraffic(
+                    val result = RoutesApiClient.checkTrafficOnRoute(
                         "Dresden Hauptbahnhof, Dresden",
                         "Frauenkirche Dresden, Dresden",
+                        emptyList(),
                         key ?: "",
                     )
                     withContext(Dispatchers.Main) {

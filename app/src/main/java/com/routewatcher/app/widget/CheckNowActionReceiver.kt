@@ -6,7 +6,7 @@ import android.content.Intent
 import com.routewatcher.app.alarm.NotificationHelper
 import com.routewatcher.app.data.AppDatabase
 import com.routewatcher.app.data.SettingsStore
-import com.routewatcher.app.network.DistanceMatrixClient
+import com.routewatcher.app.network.RoutesApiClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -29,9 +29,10 @@ class CheckNowActionReceiver : BroadcastReceiver() {
                 }
 
                 routes.forEach { route ->
-                    val result = DistanceMatrixClient.checkTraffic(
+                    val result = RoutesApiClient.checkTrafficOnRoute(
                         route.originAddress,
                         route.destinationAddress,
+                        route.lockedWaypointsList(),
                         apiKey,
                     )
                     if (result.success) {

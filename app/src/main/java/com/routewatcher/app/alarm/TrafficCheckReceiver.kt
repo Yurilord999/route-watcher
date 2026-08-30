@@ -6,7 +6,7 @@ import android.content.Intent
 import android.os.PowerManager
 import com.routewatcher.app.data.AppDatabase
 import com.routewatcher.app.data.SettingsStore
-import com.routewatcher.app.network.DistanceMatrixClient
+import com.routewatcher.app.network.RoutesApiClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -43,7 +43,12 @@ class TrafficCheckReceiver : BroadcastReceiver() {
         if (apiKey.isNullOrBlank()) {
             NotificationHelper.showCheckFailed(context, route, "No API key set - open Settings")
         } else {
-            val result = DistanceMatrixClient.checkTraffic(route.originAddress, route.destinationAddress, apiKey)
+            val result = RoutesApiClient.checkTrafficOnRoute(
+                route.originAddress,
+                route.destinationAddress,
+                route.lockedWaypointsList(),
+                apiKey,
+            )
             if (result.success) {
                 if (result.delayMinutes >= route.delayThresholdMinutes) {
                     NotificationHelper.showJamAlert(context, route, result, offsetMinutes)
