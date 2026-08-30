@@ -14,13 +14,12 @@ automatic traffic checks, manual check via widget, notifications.
 7. Alarm scheduling - AlarmManager.setAlarmClock(), enable/disable, notifications
 8. Widget - home-screen "Check now" button
 9. Route picker - chose a specific road on the map (from up to 3 suggestions)
+10. Real traffic checks - scheduled and manual checks query Routes API now
 
 ## Next up
-Wire RoutesApiClient.checkTrafficOnRoute into TrafficCheckReceiver and CheckNowActionReceiver.
-Fully retire DistanceMatrixClient, then, tackle the ViewModel refactor
+Tackle the ViewModel refactor
 
 ## Known limitations / redesign considerations
-- Replacing Distance Matrix entirely since it is deprecated and limited in functionality
 - Route picker only offers Google's suggested alternatives (no custom waypoint/detour editing)
 - Considering a ViewModel once app state outgrows RouteWatcherApp.kt (added 2 TODOs: "bandaid")
 
