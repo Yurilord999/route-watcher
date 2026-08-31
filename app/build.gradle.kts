@@ -72,5 +72,6 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.google.android.gms:play-services-maps:18.2.0")
     implementation("com.google.maps.android:maps-compose:4.3.3")
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
     ksp("androidx.room:room-compiler:2.8.0")
 }
