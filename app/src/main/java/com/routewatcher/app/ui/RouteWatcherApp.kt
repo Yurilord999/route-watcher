@@ -14,12 +14,15 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.routewatcher.app.alarm.AlarmScheduler
 import com.routewatcher.app.data.RouteDao
 import com.routewatcher.app.data.RouteEntity
 import com.routewatcher.app.data.SettingsStore
 import com.routewatcher.app.network.RouteOption
 import com.routewatcher.app.network.RoutesApiClient
+import com.routewatcher.app.viewmodel.RouteViewModel
+import com.routewatcher.app.viewmodel.RouteViewModelFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -42,11 +45,12 @@ fun RouteWatcherApp(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val viewModel: RouteViewModel = viewModel(factory = RouteViewModelFactory(dao, settingsStore))
 
     var screen by remember { mutableStateOf<Screen>(Screen.List) }
-    val routes by dao.observeAll().collectAsState(initial = emptyList())
-    var apiKey by remember { mutableStateOf(settingsStore.getApiKey()) }
-    var testResult by remember { mutableStateOf<String?>(null) }
+    val routes by viewModel.routes.collectAsState()
+    val apiKey by viewModel.apiKey.collectAsState()
+    val testResult by viewModel.testResult.collectAsState()
 
     when (val currentScreen = screen) {
         is Screen.List -> RouteListScreen(
@@ -54,16 +58,8 @@ fun RouteWatcherApp(
             onAddRoute = { screen = Screen.AddEdit(null) },
             onEditRoute = { screen = Screen.AddEdit(it) },
             onToggleRoute = { route, enabled ->
-                scope.launch(Dispatchers.IO) {
-                    val updated = route.copy(enabled = enabled)
-                    dao.upsert(updated)
-                    if (enabled) {
-                        withContext(Dispatchers.Main) { onRequestExactAlarmPermission() }
-                        AlarmScheduler.scheduleAllForRoute(context, updated)
-                    } else {
-                        AlarmScheduler.cancelAllForRoute(context, updated.id)
-                    }
-                }
+                if (enabled) onRequestExactAlarmPermission()
+                viewModel.toggleRoute(context, route, enabled)
             },
             onOpenSettings = { screen = Screen.Settings },
         )
@@ -133,32 +129,9 @@ fun RouteWatcherApp(
         }
         is Screen.Settings -> SettingsScreen(
             currentKey = apiKey,
-            onSaveKey = { key ->
-                settingsStore.setApiKey(key)
-                apiKey = key
-            },
-            onClearKey = {
-                settingsStore.clearApiKey()
-                apiKey = null
-            },
-            onTestKey = {
-                val key = settingsStore.getApiKey()
-                scope.launch(Dispatchers.IO) {
-                    val result = RoutesApiClient.checkTrafficOnRoute(
-                        "Dresden Hauptbahnhof, Dresden",
-                        "Frauenkirche Dresden, Dresden",
-                        emptyList(),
-                        key ?: "",
-                    )
-                    withContext(Dispatchers.Main) {
-                        testResult = if (result.success) {
-                            "Key works. Test route: ${result.trafficDurationMinutes} min."
-                        } else {
-                            "Test failed: ${result.errorMessage}"
-                        }
-                    }
-                }
-            },
+            onSaveKey = { key -> viewModel.saveApiKey(key) },
+            onClearKey = { viewModel.clearApiKey() },
+            onTestKey = { viewModel.testApiKey() },
             testResultMessage = testResult,
             onBack = { screen = Screen.List },
         )
