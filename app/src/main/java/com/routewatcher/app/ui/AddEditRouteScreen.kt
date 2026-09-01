@@ -7,28 +7,31 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.routewatcher.app.R
-import com.routewatcher.app.data.RouteEntity
-import com.routewatcher.app.network.RouteOption
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEditRouteScreen(
-    existing: RouteEntity?,
-    pickedRoute: RouteOption?,
-    onSave: (RouteEntity) -> Unit,
-    onDelete: (() -> Unit)?,
-    onPickRoad: (origin: String, destination: String) -> Unit,
+    name: String,
+    onNameChange: (String) -> Unit,
+    origin: String,
+    onOriginChange: (String) -> Unit,
+    destination: String,
+    onDestinationChange: (String) -> Unit,
+    hour: String,
+    onHourChange: (String) -> Unit,
+    minute: String,
+    onMinuteChange: (String) -> Unit,
+    offsets: String,
+    onOffsetsChange: (String) -> Unit,
+    threshold: String,
+    onThresholdChange: (String) -> Unit,
+    lockedRouteSummary: String?,
+    isNewRoute: Boolean,
+    onSave: () -> Unit,
+    onDelete: () -> Unit,
+    onPickRoad: () -> Unit,
     onCancel: () -> Unit,
 ) {
-    var name by remember { mutableStateOf(existing?.name ?: "") }
-    var origin by remember { mutableStateOf(existing?.originAddress ?: "") }
-    var destination by remember { mutableStateOf(existing?.destinationAddress ?: "") }
-    var hour by remember { mutableStateOf((existing?.departureHour ?: 8).toString()) }
-    var minute by remember { mutableStateOf((existing?.departureMinute ?: 0).toString()) }
-    var offsets by remember { mutableStateOf(existing?.checkOffsetsMinutes ?: "30") }
-    var threshold by remember { mutableStateOf((existing?.delayThresholdMinutes ?: 10).toString()) }
-    val lockedRouteSummary = pickedRoute?.summary ?: existing?.lockedRouteSummary
-
     Scaffold(
         topBar = { TopAppBar(title = { Text(stringResource(R.string.add_route)) }) },
     ) { padding ->
@@ -40,7 +43,7 @@ fun AddEditRouteScreen(
         ) {
             OutlinedTextField(
                 value = name,
-                onValueChange = { name = it },
+                onValueChange = onNameChange,
                 label = { Text(stringResource(R.string.route_name)) },
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -48,7 +51,7 @@ fun AddEditRouteScreen(
 
             OutlinedTextField(
                 value = origin,
-                onValueChange = { origin = it },
+                onValueChange = onOriginChange,
                 label = { Text(stringResource(R.string.origin_address)) },
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -56,7 +59,7 @@ fun AddEditRouteScreen(
 
             OutlinedTextField(
                 value = destination,
-                onValueChange = { destination = it },
+                onValueChange = onDestinationChange,
                 label = { Text(stringResource(R.string.destination_address)) },
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -65,14 +68,14 @@ fun AddEditRouteScreen(
             Row {
                 OutlinedTextField(
                     value = hour,
-                    onValueChange = { hour = it.filter { c -> c.isDigit() } },
+                    onValueChange = { onHourChange(it.filter { c -> c.isDigit() }) },
                     label = { Text(stringResource(R.string.departure_hour)) },
                     modifier = Modifier.weight(1f),
                 )
                 Spacer(Modifier.width(8.dp))
                 OutlinedTextField(
                     value = minute,
-                    onValueChange = { minute = it.filter { c -> c.isDigit() } },
+                    onValueChange = { onMinuteChange(it.filter { c -> c.isDigit() }) },
                     label = { Text(stringResource(R.string.departure_minute)) },
                     modifier = Modifier.weight(1f),
                 )
@@ -81,7 +84,7 @@ fun AddEditRouteScreen(
 
             OutlinedTextField(
                 value = offsets,
-                onValueChange = { offsets = it },
+                onValueChange = onOffsetsChange,
                 label = { Text(stringResource(R.string.check_offsets)) },
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -89,7 +92,7 @@ fun AddEditRouteScreen(
 
             OutlinedTextField(
                 value = threshold,
-                onValueChange = { threshold = it.filter { c -> c.isDigit() } },
+                onValueChange = { onThresholdChange(it.filter { c -> c.isDigit() }) },
                 label = { Text(stringResource(R.string.delay_threshold)) },
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -102,7 +105,7 @@ fun AddEditRouteScreen(
             Spacer(Modifier.height(8.dp))
 
             OutlinedButton(
-                onClick = { onPickRoad(origin, destination)},
+                onClick = onPickRoad,
                 modifier = Modifier.fillMaxWidth(),
                 ) {
                 Text(if (lockedRouteSummary != null) "Change picked road" else "Pick road on map")
@@ -110,26 +113,7 @@ fun AddEditRouteScreen(
             Spacer(Modifier.height(8.dp))
 
             Button(
-                onClick = {
-                    onSave(
-                        RouteEntity(
-                            id = existing?.id ?: 0,
-                            name = name.ifBlank { "Route" },
-                            originAddress = origin,
-                            destinationAddress = destination,
-                            departureHour = hour.toIntOrNull()?.coerceIn(0, 23) ?: 8,
-                            departureMinute = minute.toIntOrNull()?.coerceIn(0, 59) ?: 0,
-                            checkOffsetsMinutes = offsets.ifBlank { "30" },
-                            delayThresholdMinutes = threshold.toIntOrNull() ?: 10,
-                            activeDays = existing?.activeDays ?: 0b1111100,
-                            enabled = existing?.enabled ?: false,
-                            lockedRoutePolyline = pickedRoute?.encodedPolyline ?: existing?.lockedRoutePolyline,
-                            lockedRouteSummary = pickedRoute?.summary ?: existing?.lockedRouteSummary,
-                            lockedRouteWaypoints = pickedRoute?.let { encodeWaypoints(it.waypoints) }
-                                ?: existing?.lockedRouteWaypoints,
-                            ),
-                        )
-                    },
+                onClick = onSave,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(stringResource(R.string.save_route))
@@ -143,7 +127,7 @@ fun AddEditRouteScreen(
                 Text(stringResource(R.string.cancel))
             }
 
-            if (onDelete != null) {
+            if (!isNewRoute) {
                 Spacer(Modifier.height(8.dp))
                 TextButton(
                     onClick = onDelete,

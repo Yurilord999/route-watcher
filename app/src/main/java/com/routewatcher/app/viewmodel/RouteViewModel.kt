@@ -8,6 +8,7 @@ import com.routewatcher.app.data.RouteEntity
 import com.routewatcher.app.data.SettingsStore
 import com.routewatcher.app.alarm.AlarmScheduler
 import com.routewatcher.app.network.RoutesApiClient
+import com.routewatcher.app.network.RouteOption
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -70,5 +71,100 @@ class RouteViewModel(
                 "Test failed: ${result.errorMessage}"
             }
         }
+    }
+
+    private val _editState = MutableStateFlow<RouteEditState?>(null)
+    val editState: StateFlow<RouteEditState?> = _editState.asStateFlow()
+
+    private val _pickerState = MutableStateFlow<RoutePickerState?>(null)
+    val pickerState: StateFlow<RoutePickerState?> = _pickerState.asStateFlow()
+
+    fun startNewRoute() {
+        _editState.value = RouteEditState()
+    }
+
+    fun startEditRoute(route: RouteEntity) {
+        _editState.value = RouteEditState.from(route)
+    }
+
+    private fun updateEditState(transform: (RouteEditState) -> RouteEditState) {
+        _editState.value = _editState.value?.let(transform)
+    }
+
+    fun updateName(value: String) = updateEditState { it.copy(name = value) }
+    fun updateOrigin(value: String) = updateEditState { it.copy(origin = value) }
+    fun updateDestination(value: String) = updateEditState { it.copy(destination = value) }
+    fun updateHour(value: String) = updateEditState { it.copy(hour = value) }
+    fun updateMinute(value: String) = updateEditState { it.copy(minute = value) }
+    fun updateOffsets(value: String) = updateEditState { it.copy(offsets = value) }
+    fun updateThreshold(value: String) = updateEditState { it.copy(threshold = value) }
+
+    fun cancelEdit() {
+        _editState.value = null
+        _pickerState.value = null
+    }
+
+    fun saveEditedRoute(context: Context) {
+        val state = _editState.value ?: return
+        val route = RouteEntity(
+            id = state.id,
+            name = state.name.ifBlank { "Route" },
+            originAddress = state.origin,
+            destinationAddress = state.destination,
+            departureHour = state.hour.toIntOrNull()?.coerceIn(0, 23) ?: 8,
+            departureMinute = state.minute.toIntOrNull()?.coerceIn(0, 59) ?: 0,
+            checkOffsetsMinutes = state.offsets.ifBlank { "30" },
+            delayThresholdMinutes = state.threshold.toIntOrNull() ?: 10,
+            activeDays = state.activeDays,
+            enabled = state.enabled,
+            lockedRoutePolyline = state.lockedRoutePolyline,
+            lockedRouteSummary = state.lockedRouteSummary,
+            lockedRouteWaypoints = state.lockedRouteWaypoints,
+        )
+        viewModelScope.launch(Dispatchers.IO) {
+            val id = dao.upsert(route)
+            val saved = route.copy(id = if (route.id == 0L) id else route.id)
+            AlarmScheduler.scheduleAllForRoute(context, saved)
+        }
+        _editState.value = null
+    }
+
+    fun deleteEditedRoute(context: Context) {
+        val state = _editState.value ?: return
+        if (state.isNewRoute) return
+        val toDelete = RouteEntity(
+            id = state.id,
+            name = state.name,
+            originAddress = state.origin,
+            destinationAddress = state.destination,
+        )
+        AlarmScheduler.cancelAllForRoute(context, state.id)
+        viewModelScope.launch(Dispatchers.IO) { dao.delete(toDelete) }
+        _editState.value = null
+    }
+
+    fun openRoadPicker() {
+        val state = _editState.value ?: return
+        _pickerState.value = RoutePickerState(origin = state.origin, destination = state.destination)
+        viewModelScope.launch(Dispatchers.IO) {
+            val key = settingsStore.getApiKey() ?: ""
+            val options = RoutesApiClient.fetchRouteAlternatives(state.origin, state.destination, key)
+            _pickerState.value = _pickerState.value?.copy(routeOptions = options, isLoading = false)
+        }
+    }
+
+    fun confirmPickedRoute(picked: RouteOption) {
+        updateEditState {
+            it.copy(
+                lockedRoutePolyline = picked.encodedPolyline,
+                lockedRouteSummary = picked.summary,
+                lockedRouteWaypoints = encodeWaypoints(picked.waypoints),
+            )
+        }
+        _pickerState.value = null
+    }
+
+    fun cancelRoadPicker() {
+        _pickerState.value = null
     }
 }
