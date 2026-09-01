@@ -15,16 +15,20 @@ automatic traffic checks, manual check via widget, notifications.
 8. Widget - home-screen "Check now" button
 9. Route picker - chose a specific road on the map (from up to 3 suggestions)
 10. Real traffic checks - scheduled and manual checks query Routes API now
+11. ViewModel refactor - list, settings, add/edit etc. live in RouteViewModel now
+    (manual ViewModelFactory, no DI library)
 
 ## Next up
-Tackle the ViewModel refactor
+Custom Waypoints
 
 ## Known limitations / redesign considerations
 - Route picker only offers Google's suggested alternatives (no custom waypoint/detour editing)
-- Considering a ViewModel once app state outgrows RouteWatcherApp.kt (added 2 TODOs: "bandaid")
 
 ## Improvement backlog
 - Replace raw hour/minute text fields in AddEditRouteScreen with a real time picker
 - CheckNowActionReceivers "no API key" handling is awkward when zero routes are enabled
 - Add a Quick Settings Tile as an alternative to the home screen widget
+- Day of the week scheduling (+snooze button?)
+- Improved visibility (in app / widget ): on glance results
+- API key tutorial for dummies
 - General UI/visual polish needed
