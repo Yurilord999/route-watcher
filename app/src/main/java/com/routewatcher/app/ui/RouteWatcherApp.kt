@@ -96,6 +96,7 @@ fun RouteWatcherApp(
             onTestKey = { viewModel.testApiKey() },
             testResultMessage = testResult,
             onBack = { screen = Screen.List },
+            onTestRouteThroughStops = { viewModel.testRouteThroughStops() }
         )
         is Screen.PickRoad -> pickerState?.let { state ->
             RoutePickerScreen(

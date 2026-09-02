@@ -76,6 +76,69 @@ object RoutesApiClient {
         }
     }
 
+    // Custom route editing: recomputes a route forced through given stops
+    // fetchRouteAlternatives (Google suggested alternatives) don't offer any stops
+    fun fetchRouteThroughStops(
+        origin: String,
+        destination: String,
+        stops: List<Pair<Double, Double>>,
+        apiKey: String,
+    ): RouteOption? {
+        if (apiKey.isBlank()) {
+            Log.e("RoutesApiClient", "fetchRouteThroughStops: no API key set")
+            return null
+        }
+
+        val body = JSONObject().apply {
+            put("origin", JSONObject().put("address", origin))
+            put("destination", JSONObject().put("address", destination))
+            put("travelMode", "DRIVE")
+            put("routingPreference", "TRAFFIC_AWARE")
+            if (stops.isNotEmpty()) {
+                val intermediates = JSONArray()
+                stops.forEach { (lat, lng) ->
+                    intermediates.put(
+                        JSONObject().apply {
+                            put(
+                                "location",
+                                JSONObject().put(
+                                    "latLng",
+                                    JSONObject().put("latitude", lat).put("longitude", lng),
+                                ),
+                            )
+                            put("via", true)
+                        },
+                    )
+                }
+                put("intermediates", intermediates)
+            }
+        }
+
+        val request = buildRequest(
+            body,
+            fieldMask = "routes.duration,routes.staticDuration,routes.distanceMeters,routes.polyline.encodedPolyline",
+            apiKey = apiKey,
+        )
+
+        return try {
+            client.newCall(request).execute().use { response ->
+                val responseBody = response.body?.string()
+                if (responseBody == null) {
+                    Log.e("RoutesApiClient", "fetchRouteThroughStops: empty response body")
+                    return null
+                }
+                if (!response.isSuccessful) {
+                    Log.e("RoutesApiClient", "fetchRouteThroughStops: HTTP ${response.code} - $responseBody")
+                    return null
+                }
+                parseAlternatives(responseBody).firstOrNull()
+            }
+        } catch (e: Exception) {
+            Log.e("RoutesApiClient", "fetchRouteThroughStops: request failed", e)
+            null
+        }
+    }
+
     // Pins the check to a specific physical road by forcing the route to be selected
     fun checkTrafficOnRoute(
         origin: String,

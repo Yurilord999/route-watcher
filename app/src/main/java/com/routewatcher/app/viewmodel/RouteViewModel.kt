@@ -73,6 +73,24 @@ class RouteViewModel(
         }
     }
 
+    // TEMPORARY! fetchRouteThroughStops test
+    fun testRouteThroughStops() {
+        val key = _apiKey.value
+        viewModelScope.launch(Dispatchers.IO) {
+            val result = RoutesApiClient.fetchRouteThroughStops(
+                "Dresden Hauptbahnhof, Dresden",
+                "Frauenkirche Dresden, Dresden",
+                listOf(51.0489 to 13.7443), // Pirnaischer Platz - roughly on the way
+                key ?: "",
+            )
+            _testResult.value = if (result != null) {
+                "Through stop: ${result.distanceText}, ${result.durationMinutes} min"
+            } else {
+                "Failed - check Logcat (tag RoutesApiClient)"
+            }
+        }
+    }
+
     private val _editState = MutableStateFlow<RouteEditState?>(null)
     val editState: StateFlow<RouteEditState?> = _editState.asStateFlow()
 

@@ -19,6 +19,7 @@ fun SettingsScreen(
     onTestKey: () -> Unit,
     testResultMessage: String?,
     onBack: () -> Unit,
+    onTestRouteThroughStops: () -> Unit
 ) {
     var keyInput by remember { mutableStateOf(currentKey ?: "") }
     var showKey by remember { mutableStateOf(false) }
@@ -67,6 +68,15 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(stringResource(R.string.test_key))
+            }
+            Spacer(Modifier.height(8.dp))
+
+            // TEMPORARY! fetchRouteThroughStops test
+            OutlinedButton(
+                onClick = onTestRouteThroughStops,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("Test route through stop (temp)")
             }
             testResultMessage?.let {
                 Spacer(Modifier.height(8.dp))
