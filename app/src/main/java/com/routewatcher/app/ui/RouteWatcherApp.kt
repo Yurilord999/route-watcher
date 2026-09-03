@@ -111,6 +111,12 @@ fun RouteWatcherApp(
                     viewModel.cancelRoadPicker()
                     screen = Screen.AddEdit
                 },
+                isCustomizing = state.isCustomizing,
+                stops = state.stops,
+                onModeChange = { viewModel.setPickerCustomizing(it) },
+                onAddStop = { lat, lng -> viewModel.addPickerStop(lat, lng) },
+                onMoveStop = { index, lat, lng -> viewModel.movePickerStop(index, lat, lng) },
+                onRemoveStop = { viewModel.removePickerStop(it) },
             )
         }
     }

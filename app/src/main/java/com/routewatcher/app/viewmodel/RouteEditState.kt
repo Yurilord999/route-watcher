@@ -46,6 +46,8 @@ data class RoutePickerState(
     val destination: String,
     val routeOptions: List<RouteOption> = emptyList(),
     val isLoading: Boolean = true,
+    val isCustomizing: Boolean = false,
+    val stops: List<Pair<Double, Double>> = emptyList(),
 )
 
 fun encodeWaypoints(waypoints: List<Pair<Double, Double>>): String =

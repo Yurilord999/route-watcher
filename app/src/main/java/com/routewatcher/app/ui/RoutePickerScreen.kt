@@ -5,8 +5,15 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -17,19 +24,29 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.Alignment
+
+
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.rememberMarkerState
 import com.routewatcher.app.network.RouteOption
 
 // Lets the user pick their route of choice (similar to Google Maps)
@@ -41,6 +58,12 @@ fun RoutePickerScreen(
     initiallySelectedPolyline: String?,
     onConfirm: (RouteOption) -> Unit,
     onCancel: () -> Unit,
+    isCustomizing: Boolean,
+    stops: List<Pair<Double, Double>>,
+    onModeChange: (Boolean) -> Unit,
+    onAddStop: (Double, Double) -> Unit,
+    onMoveStop: (Int, Double, Double) -> Unit,
+    onRemoveStop: (Int) -> Unit,
 ) {
     // Match against whatever is already picked/saved
     // Reopening the picker shows the current choice instead of defaulting to the first option
@@ -68,6 +91,21 @@ fun RoutePickerScreen(
                     modifier = Modifier.padding(16.dp),
                 )
             } else {
+                SingleChoiceSegmentedButtonRow(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                ) {
+                    SegmentedButton(
+                        selected = !isCustomizing,
+                        onClick = { onModeChange(false) },
+                        shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                    ) { Text("Browse") }
+                    SegmentedButton(
+                        selected = isCustomizing,
+                        onClick = { onModeChange(true) },
+                        shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                    ) { Text("Customize") }
+                }
+
                 val selected = routeOptions[selectedIndex]
                 val allPoints = routeOptions.flatMap { decodeForDisplay(it.encodedPolyline) }
                 val cameraPositionState = rememberCameraPositionState {
@@ -80,27 +118,83 @@ fun RoutePickerScreen(
                 GoogleMap(
                     modifier = Modifier.fillMaxWidth().weight(1f),
                     cameraPositionState = cameraPositionState,
+                    onMapClick = { latLng ->
+                        if (isCustomizing) onAddStop(latLng.latitude, latLng.longitude)
+                    },
                 ) {
                     routeOptions.forEachIndexed { index, option ->
+                        if (isCustomizing && index != selectedIndex) return@forEachIndexed
                         val points = decodeForDisplay(option.encodedPolyline)
                         Polyline(
                             points = points,
                             color = if (index == selectedIndex) Color(0xFF1E88E5) else Color(0xFFB0BEC5),
                             width = if (index == selectedIndex) 12f else 8f,
-                            clickable = true,
+                            clickable = !isCustomizing,
                             onClick = { selectedIndex = index },
                         )
                     }
+
+                    if (isCustomizing) {
+                        stops.forEachIndexed { index, stop ->
+                            key(index) {
+                                val markerState = rememberMarkerState(position = LatLng(stop.first, stop.second))
+                                LaunchedEffect(markerState.position) {
+                                    val pos = markerState.position
+                                    if (pos.latitude != stop.first || pos.longitude != stop.second) {
+                                        onMoveStop(index, pos.latitude, pos.longitude)
+                                    }
+                                }
+                                Marker(
+                                    state = markerState,
+                                    draggable = true,
+                                    title = "Stop ${index + 1}",
+                                )
+                            }
+                        }
+                    }
                 }
 
-                LazyColumn(Modifier.fillMaxWidth().weight(0.6f)) {
-                    items(routeOptions) { option ->
-                        val index = routeOptions.indexOf(option)
-                        RouteOptionCard(
-                            option = option,
-                            isSelected = index == selectedIndex,
-                            onClick = { selectedIndex = index },
+                if (!isCustomizing) {
+                    LazyColumn(Modifier.fillMaxWidth().weight(0.6f)) {
+                        items(routeOptions) { option ->
+                            val index = routeOptions.indexOf(option)
+                            RouteOptionCard(
+                                option = option,
+                                isSelected = index == selectedIndex,
+                                onClick = { selectedIndex = index },
+                            )
+                        }
+                    }
+                } else {
+                    Column(Modifier.fillMaxWidth().weight(0.6f).padding(12.dp)) {
+                        Text(
+                            "Tap the road to add a stop, drag a stop to move it. ",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
+                        Spacer(Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        ) {
+                            stops.forEachIndexed { index, _ ->
+                                if (index > 0) Spacer(Modifier.width(8.dp))
+                                Row(
+                                    modifier = Modifier
+                                        .background(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.shapes.small)
+                                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text("Stop ${index + 1}", style = MaterialTheme.typography.bodySmall)
+                                    Spacer(Modifier.width(6.dp))
+                                    Text(
+                                        "×",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.error,
+                                        modifier = Modifier.clickable { onRemoveStop(index) },
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
 

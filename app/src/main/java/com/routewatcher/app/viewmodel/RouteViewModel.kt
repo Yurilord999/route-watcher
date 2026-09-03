@@ -185,4 +185,30 @@ class RouteViewModel(
     fun cancelRoadPicker() {
         _pickerState.value = null
     }
+
+    fun setPickerCustomizing(customizing: Boolean) {
+        _pickerState.value = _pickerState.value?.copy(isCustomizing = customizing)
+    }
+
+    // TODO: No route recompute yet. Stops are purely local UI state atm
+    fun addPickerStop(lat: Double, lng: Double) {
+        val state = _pickerState.value ?: return
+        _pickerState.value = state.copy(stops = state.stops + (lat to lng))
+    }
+
+    fun movePickerStop(index: Int, lat: Double, lng: Double) {
+        val state = _pickerState.value ?: return
+        if (index !in state.stops.indices) return
+        _pickerState.value = state.copy(
+            stops = state.stops.toMutableList().also { it[index] = lat to lng },
+        )
+    }
+
+    fun removePickerStop(index: Int) {
+        val state = _pickerState.value ?: return
+        if (index !in state.stops.indices) return
+        _pickerState.value = state.copy(
+            stops = state.stops.toMutableList().also { it.removeAt(index) },
+        )
+    }
 }
