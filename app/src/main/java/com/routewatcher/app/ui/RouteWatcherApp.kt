@@ -117,6 +117,8 @@ fun RouteWatcherApp(
                 onAddStop = { lat, lng -> viewModel.addPickerStop(lat, lng) },
                 onMoveStop = { index, lat, lng -> viewModel.movePickerStop(index, lat, lng) },
                 onRemoveStop = { viewModel.removePickerStop(it) },
+                customRoute = state.customRoute,
+                isRecomputing = state.isRecomputing,
             )
         }
     }

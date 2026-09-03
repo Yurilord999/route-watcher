@@ -23,6 +23,9 @@ Custom Waypoints
 
 ## Known limitations / redesign considerations
 - Route picker only offers Google's suggested alternatives (no custom waypoint/detour editing)
+- Googles routing quality for nearby/short-distance custom stops is very bad.
+  Probably limited routes API behavior. 
+  Potential future workarounds: distance sanity checking a returned route before showing it?
 
 ## Improvement backlog
 - Replace raw hour/minute text fields in AddEditRouteScreen with a real time picker
@@ -31,4 +34,8 @@ Custom Waypoints
 - Day of the week scheduling (+snooze button?)
 - Improved visibility (in app / widget ): on glance results
 - API key tutorial for dummies
+- Cap API requests per day / month as a safeguard within Googles free tier 
+- No API key set = every function silently fails. Onboarding required.
+- No routes found screen (no API key set) is a dead end. Cancel/back button required
+- Marker drag is super clunky, takes too long
 - General UI/visual polish needed

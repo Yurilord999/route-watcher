@@ -16,6 +16,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 
 // Single shared ViewModel for the whole app (screen navigation, list, add/edit, picker state, settings)
 class RouteViewModel(
@@ -183,6 +186,7 @@ class RouteViewModel(
     }
 
     fun cancelRoadPicker() {
+        recomputeJob?.cancel()
         _pickerState.value = null
     }
 
@@ -190,10 +194,12 @@ class RouteViewModel(
         _pickerState.value = _pickerState.value?.copy(isCustomizing = customizing)
     }
 
-    // TODO: No route recompute yet. Stops are purely local UI state atm
+    private var recomputeJob: Job? = null
+
     fun addPickerStop(lat: Double, lng: Double) {
         val state = _pickerState.value ?: return
         _pickerState.value = state.copy(stops = state.stops + (lat to lng))
+        scheduleStopRecompute()
     }
 
     fun movePickerStop(index: Int, lat: Double, lng: Double) {
@@ -202,6 +208,7 @@ class RouteViewModel(
         _pickerState.value = state.copy(
             stops = state.stops.toMutableList().also { it[index] = lat to lng },
         )
+        scheduleStopRecompute()
     }
 
     fun removePickerStop(index: Int) {
@@ -210,5 +217,27 @@ class RouteViewModel(
         _pickerState.value = state.copy(
             stops = state.stops.toMutableList().also { it.removeAt(index) },
         )
+        scheduleStopRecompute()
+    }
+
+    // Fires on each intermediate drag position (not just on release)
+    // Cancel & (re)launch means only the last call reaches the network call (when the marker stops moving)
+    private fun scheduleStopRecompute() {
+        recomputeJob?.cancel() // stop the previous pending recompute, if there is one
+        val state = _pickerState.value ?: return
+        if (state.stops.isEmpty()) {
+            _pickerState.value = state.copy(customRoute = null, isRecomputing = false)
+            return
+        }
+        recomputeJob = viewModelScope.launch { // start a new pending recompute
+            _pickerState.value = _pickerState.value?.copy(isRecomputing = true)
+            delay(600) //milliseconds
+            val current = _pickerState.value ?: return@launch
+            val key = settingsStore.getApiKey() ?: ""
+            val result = withContext(Dispatchers.IO) {
+                RoutesApiClient.fetchRouteThroughStops(current.origin, current.destination, current.stops, key)
+            }
+            _pickerState.value = _pickerState.value?.copy(customRoute = result, isRecomputing = false)
+        }
     }
 }

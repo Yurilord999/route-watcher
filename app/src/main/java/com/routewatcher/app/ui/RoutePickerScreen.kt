@@ -64,6 +64,8 @@ fun RoutePickerScreen(
     onAddStop: (Double, Double) -> Unit,
     onMoveStop: (Int, Double, Double) -> Unit,
     onRemoveStop: (Int) -> Unit,
+    customRoute: RouteOption?,
+    isRecomputing: Boolean,
 ) {
     // Match against whatever is already picked/saved
     // Reopening the picker shows the current choice instead of defaulting to the first option
@@ -124,7 +126,12 @@ fun RoutePickerScreen(
                 ) {
                     routeOptions.forEachIndexed { index, option ->
                         if (isCustomizing && index != selectedIndex) return@forEachIndexed
-                        val points = decodeForDisplay(option.encodedPolyline)
+                        val polylineToShow = if (isCustomizing && customRoute != null) {
+                                customRoute.encodedPolyline
+                            } else {
+                                option.encodedPolyline
+                            }
+                        val points = decodeForDisplay(polylineToShow)
                         Polyline(
                             points = points,
                             color = if (index == selectedIndex) Color(0xFF1E88E5) else Color(0xFFB0BEC5),
@@ -167,11 +174,22 @@ fun RoutePickerScreen(
                     }
                 } else {
                     Column(Modifier.fillMaxWidth().weight(0.6f).padding(12.dp)) {
-                        Text(
-                            "Tap the road to add a stop, drag a stop to move it. ",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                        when {
+                            isRecomputing -> Text(
+                                "Recalculating route...",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            customRoute != null -> Text(
+                                "${customRoute.distanceText} - about ${customRoute.durationMinutes} min right now",
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                            else -> Text(
+                                "Tap the road to add a stop, drag a stop to move it. ",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                         Spacer(Modifier.height(8.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
@@ -203,7 +221,15 @@ fun RoutePickerScreen(
                         Text("Cancel")
                     }
                     Button(
-                        onClick = { onConfirm(selected) },
+                        onClick = {
+                            // User placed stops are better pinning points than polyline derived guesses parseAlternatives would attach
+                            // Keep the real ones when confirming customized route
+                            val toConfirm = if (isCustomizing && customRoute != null) {
+                                customRoute.copy(waypoints = stops)
+                            } else {
+                                selected
+                        }
+                        onConfirm(selected) },
                         modifier = Modifier.weight(1f),
                     ) {
                         Text("Use this road")
