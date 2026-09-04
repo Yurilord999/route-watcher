@@ -138,6 +138,7 @@ class RouteViewModel(
             delayThresholdMinutes = state.threshold.toIntOrNull() ?: 10,
             activeDays = state.activeDays,
             enabled = state.enabled,
+            isCustomRoute = state.isCustomRoute,
             lockedRoutePolyline = state.lockedRoutePolyline,
             lockedRouteSummary = state.lockedRouteSummary,
             lockedRouteWaypoints = state.lockedRouteWaypoints,
@@ -166,20 +167,29 @@ class RouteViewModel(
 
     fun openRoadPicker() {
         val state = _editState.value ?: return
-        _pickerState.value = RoutePickerState(origin = state.origin, destination = state.destination)
+        val existingStops = if (state.isCustomRoute) decodeWaypoints(state.lockedRouteWaypoints) else emptyList()
+        _pickerState.value = RoutePickerState(
+            origin = state.origin,
+            destination = state.destination,
+            isCustomizing = existingStops.isNotEmpty(),
+            stops = existingStops,
+            )
         viewModelScope.launch(Dispatchers.IO) {
             val key = settingsStore.getApiKey() ?: ""
             val options = RoutesApiClient.fetchRouteAlternatives(state.origin, state.destination, key)
             _pickerState.value = _pickerState.value?.copy(routeOptions = options, isLoading = false)
         }
+        // Recomputes right away so reopening a customized route shows its real
+        if (existingStops.isNotEmpty()) scheduleStopRecompute()
     }
 
-    fun confirmPickedRoute(picked: RouteOption) {
+    fun confirmPickedRoute(picked: RouteOption, isCustom: Boolean) {
         updateEditState {
             it.copy(
                 lockedRoutePolyline = picked.encodedPolyline,
                 lockedRouteSummary = picked.summary,
                 lockedRouteWaypoints = encodeWaypoints(picked.waypoints),
+                isCustomRoute = isCustom
             )
         }
         _pickerState.value = null

@@ -103,8 +103,8 @@ fun RouteWatcherApp(
                 routeOptions = state.routeOptions,
                 isLoading = state.isLoading,
                 initiallySelectedPolyline = editState?.lockedRoutePolyline,
-                onConfirm = { picked ->
-                    viewModel.confirmPickedRoute(picked)
+                onConfirm = { picked, isCustom ->
+                    viewModel.confirmPickedRoute(picked, isCustom)
                     screen = Screen.AddEdit
                 },
                 onCancel = {

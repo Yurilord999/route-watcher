@@ -15,8 +15,11 @@ data class RouteEntity(
     val checkOffsetsMinutes: String = "30",
     val delayThresholdMinutes: Int = 10,
     val activeDays: Int = 0b1111100,
+
+    // Only true when waypoints are set in custom route mode
     val enabled: Boolean = false,
 
+    val isCustomRoute: Boolean = false,
     // Locked-in route set once the user picks a specific route on the map
     // Falls back to  origin/destination routing if null.
     val lockedRoutePolyline: String? = null,

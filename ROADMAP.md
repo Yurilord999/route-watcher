@@ -17,9 +17,10 @@ automatic traffic checks, manual check via widget, notifications.
 10. Real traffic checks - scheduled and manual checks query Routes API now
 11. ViewModel refactor - list, settings, add/edit etc. live in RouteViewModel now
     (manual ViewModelFactory, no DI library)
+12. Custom waypoints - adding/editing/removing route detours in custome mode
 
 ## Next up
-Custom Waypoints
+Bugfixes
 
 ## Known limitations / redesign considerations
 - Route picker only offers Google's suggested alternatives (no custom waypoint/detour editing)

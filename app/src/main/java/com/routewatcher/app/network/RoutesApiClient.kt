@@ -107,6 +107,8 @@ object RoutesApiClient {
                                 ),
                             )
                             put("via", true)
+                            // TODO: Might fix some janky Google routing issues, to be tested
+                            put("sideOfRoad", true)
                         },
                     )
                 }

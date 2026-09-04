@@ -56,7 +56,7 @@ fun RoutePickerScreen(
     routeOptions: List<RouteOption>,
     isLoading: Boolean,
     initiallySelectedPolyline: String?,
-    onConfirm: (RouteOption) -> Unit,
+    onConfirm: (RouteOption, Boolean) -> Unit,
     onCancel: () -> Unit,
     isCustomizing: Boolean,
     stops: List<Pair<Double, Double>>,
@@ -224,12 +224,16 @@ fun RoutePickerScreen(
                         onClick = {
                             // User placed stops are better pinning points than polyline derived guesses parseAlternatives would attach
                             // Keep the real ones when confirming customized route
-                            val toConfirm = if (isCustomizing && customRoute != null) {
-                                customRoute.copy(waypoints = stops)
+                            val isCustom = isCustomizing && customRoute != null
+                            val toConfirm = if (isCustom) {
+                                customRoute.copy(
+                                    waypoints = stops,
+                                    summary = "Custom route (${stops.size} stop${if (stops.size == 1) "" else "s"})",
+                                )
                             } else {
                                 selected
                         }
-                        onConfirm(selected) },
+                        onConfirm(toConfirm, isCustom) },
                         modifier = Modifier.weight(1f),
                     ) {
                         Text("Use this road")
