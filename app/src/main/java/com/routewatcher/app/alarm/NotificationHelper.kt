@@ -65,8 +65,8 @@ object NotificationHelper {
     fun showAllClear(context: Context, route: RouteEntity, result: TrafficResult, offsetMinutes: Int) {
         val n = NotificationCompat.Builder(context, CHANNEL_STATUS)
             .setSmallIcon(android.R.drawable.ic_menu_directions)
-            .setContentTitle("${route.name}: all clear")
-            .setContentText("No delays - leaves in $offsetMinutes min")
+            .setContentTitle(context.getString(R.string.notif_all_clear_title, route.name))
+            .setContentText(context.getString(R.string.notif_all_clear_text, offsetMinutes))
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setAutoCancel(true)
             .setContentIntent(openAppIntent(context))
@@ -90,7 +90,9 @@ object NotificationHelper {
             )
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setAutoCancel(true)
-            .setContentIntent(openAppIntent(context))
+            .setContentIntent(
+                if (errorCode == TrafficErrorCode.NO_API_KEY) openSettingsIntent(context) else openAppIntent(context)
+            )
             .build()
         NotificationManagerCompat.from(context).notify(route.id.toInt() * 10 + 3, n)
     }
@@ -103,7 +105,7 @@ object NotificationHelper {
             .setContentText(context.getString(R.string.notif_api_key_missing_text))
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setAutoCancel(true)
-            .setContentIntent(openAppIntent(context))
+            .setContentIntent(openSettingsIntent(context))
             .build()
         NotificationManagerCompat.from(context).notify(NOTIFICATION_ID_API_KEY_MISSING, n)
     }
@@ -111,9 +113,21 @@ object NotificationHelper {
         val intent = Intent(context, MainActivity::class.java)
         return PendingIntent.getActivity(
             context,
-            0,
+            REQUEST_CODE_OPEN_APP,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
     }
+    private fun openSettingsIntent(context: Context): PendingIntent {
+        val intent = Intent(context, MainActivity::class.java)
+            .putExtra(MainActivity.EXTRA_OPEN_SETTINGS, true)
+        return PendingIntent.getActivity(
+            context,
+            REQUEST_CODE_OPEN_SETTINGS,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+    }
+    private const val REQUEST_CODE_OPEN_APP = 0
+    private const val REQUEST_CODE_OPEN_SETTINGS = 1
 }

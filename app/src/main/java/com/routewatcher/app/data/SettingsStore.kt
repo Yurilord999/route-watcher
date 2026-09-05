@@ -35,7 +35,13 @@ class SettingsStore(context: Context) {
         prefs.edit().remove(KEY_API_KEY).apply()
     }
 
+    fun hasSeenOnboarding(): Boolean = prefs.getBoolean(KEY_HAS_SEEN_ONBOARDING, false)
+
+    fun setHasSeenOnboarding(seen: Boolean) {
+        prefs.edit().putBoolean(KEY_HAS_SEEN_ONBOARDING, seen).apply()
+    }
     companion object {
         private const val KEY_API_KEY = "google_maps_api_key"
+        private const val KEY_HAS_SEEN_ONBOARDING = "has_seen_onboarding"
     }
 }

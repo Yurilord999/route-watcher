@@ -19,7 +19,6 @@ private sealed class Screen {
     data object AddEdit : Screen()
     data object Settings : Screen()
     data object PickRoad : Screen()
-    // Temporary! Only reachable via settings preview button for now
     data object Onboarding : Screen()
 }
 
@@ -29,11 +28,20 @@ fun RouteWatcherApp(
     dao: RouteDao,
     settingsStore: SettingsStore,
     onRequestExactAlarmPermission: () -> Unit,
+    openSettingsOnStart: Boolean = false,
 ) {
     val context = LocalContext.current
     val viewModel: RouteViewModel = viewModel(factory = RouteViewModelFactory(dao, settingsStore))
 
-    var screen by remember { mutableStateOf<Screen>(Screen.List) }
+    var screen by remember {
+        mutableStateOf<Screen>(
+            when {
+                openSettingsOnStart -> Screen.Settings
+                !settingsStore.hasSeenOnboarding() -> Screen.Onboarding
+                else -> Screen.List
+            }
+        )
+    }
     val routes by viewModel.routes.collectAsState()
     val apiKey by viewModel.apiKey.collectAsState()
     val testResult by viewModel.testResult.collectAsState()
@@ -98,11 +106,13 @@ fun RouteWatcherApp(
             onTestKey = { viewModel.testApiKey() },
             testResult = testResult,
             onBack = { screen = Screen.List },
-            onPreviewOnboarding = { screen = Screen.Onboarding },
         )
         is Screen.Onboarding -> OnboardingScreen(
             onSaveKey = { key -> viewModel.saveApiKey(key) },
-            onFinished = { screen = Screen.List },
+            onFinished = {
+                settingsStore.setHasSeenOnboarding(true)
+                screen = Screen.List
+            },
         )
         is Screen.PickRoad -> pickerState?.let { state ->
             RoutePickerScreen(

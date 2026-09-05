@@ -18,11 +18,10 @@ automatic traffic checks, manual check via widget, notifications.
 11. ViewModel refactor - list, settings, add/edit etc. live in RouteViewModel now
     (manual ViewModelFactory, no DI library)
 12. Custom waypoints - adding/editing/removing route detours in custom mode
+13. Onboarding - first launch guide screen & API guide in settings
 
 ## Next up
-Bugfixes: Widget fails silently when no routes/ no API key is set.
-Proper onboarding on start up (How does the App work, how to set up the API key).
-Localizing hard coded error messages etc. 
+Custom day of the week alarms
 
 ## Known limitations / redesign considerations
 - Polyline has no native drag support. Editing route through dragging is out of scope for now. 
@@ -32,14 +31,10 @@ Localizing hard coded error messages etc.
 
 ## Improvement backlog
 - Replace raw hour/minute text fields in AddEditRouteScreen with a real time picker
-- CheckNowActionReceivers "no API key" handling is awkward when zero routes are enabled
 - Add a Quick Settings Tile as an alternative to the home screen widget
 - Day of the week scheduling (+snooze button?)
 - Improved visibility (in app / widget ): on glance results
-- API key tutorial for dummies
-- Cap API requests per day / month as a safeguard within Googles free tier 
-- No API key set = every function silently fails. Onboarding required.
-- No routes found screen (no API key set) is a dead end. Cancel/back button required
+- Cap API requests per day / month as a safeguard within Googles free tier
 - Marker drag is super clunky, takes too long. Needs a custom touch
   listener / hit testing layer (Maps SDK has no drag timing setting)
 - General UI/visual polish needed

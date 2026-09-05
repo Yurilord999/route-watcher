@@ -33,6 +33,8 @@ class MainActivity : ComponentActivity() {
         // Database instance for whole activity lifetime
         val dao = AppDatabase.get(this).routeDao()
         val settingsStore = SettingsStore(this)
+        val openSettingsOnStart = intent.getBooleanExtra(EXTRA_OPEN_SETTINGS, false)
+
 
         setContent {
             RouteWatcherTheme {
@@ -40,6 +42,7 @@ class MainActivity : ComponentActivity() {
                     dao = dao,
                     settingsStore = settingsStore,
                     onRequestExactAlarmPermission = { maybeRequestExactAlarmPermission() },
+                    openSettingsOnStart = openSettingsOnStart,
                 )
             }
         }
@@ -66,5 +69,8 @@ class MainActivity : ComponentActivity() {
                 notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
+    }
+    companion object {
+        const val EXTRA_OPEN_SETTINGS = "open_settings"
     }
 }

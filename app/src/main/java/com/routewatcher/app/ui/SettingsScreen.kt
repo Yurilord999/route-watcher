@@ -19,7 +19,6 @@ fun SettingsScreen(
     onTestKey: () -> Unit,
     testResult: ApiKeyTestResult?,
     onBack: () -> Unit,
-    onPreviewOnboarding: () -> Unit,
 ) {
     var keyInput by remember { mutableStateOf(currentKey ?: "") }
 
@@ -85,17 +84,6 @@ fun SettingsScreen(
             ) {
                 Text(stringResource(R.string.back))
             }
-            Spacer(Modifier.height(8.dp))
-
-            // Temporary! Preview button for the onboarding screen
-            // Remove once real first-launch detection replaces this as the entry point
-            TextButton(
-                onClick = onPreviewOnboarding,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text("Preview onboarding (temp)")
-            }
-
         }
     }
 }
