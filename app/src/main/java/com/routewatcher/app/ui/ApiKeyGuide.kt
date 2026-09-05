@@ -11,6 +11,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.clickable
@@ -24,6 +26,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Text
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
 import com.routewatcher.app.R
 
 private const val CONSOLE_URL = "https://console.cloud.google.com"
@@ -87,6 +91,24 @@ fun CollapsibleApiKeyGuide(initiallyExpanded: Boolean, modifier: Modifier = Modi
         if (expanded) {
             Spacer(Modifier.height(14.dp))
             ApiKeyGuideSteps()
+        }
+    }
+}
+// ---- key input field (shared by settings and onboarding) ----
+@Composable
+fun ApiKeyInputField(value: String, onValueChange: (String) -> Unit, modifier: Modifier = Modifier) {
+    var showKey by remember { mutableStateOf(false) }
+    Column(modifier = modifier) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            label = { Text(stringResource(R.string.api_key_label)) },
+            singleLine = true,
+            visualTransformation = if (showKey) VisualTransformation.None else PasswordVisualTransformation(),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        TextButton(onClick = { showKey = !showKey }) {
+            Text(stringResource(if (showKey) R.string.hide_key else R.string.show_key))
         }
     }
 }

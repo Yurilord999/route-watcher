@@ -6,8 +6,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import com.routewatcher.app.R
 import com.routewatcher.app.network.errorMessageRes
 import com.routewatcher.app.viewmodel.ApiKeyTestResult
@@ -21,9 +19,9 @@ fun SettingsScreen(
     onTestKey: () -> Unit,
     testResult: ApiKeyTestResult?,
     onBack: () -> Unit,
+    onPreviewOnboarding: () -> Unit,
 ) {
     var keyInput by remember { mutableStateOf(currentKey ?: "") }
-    var showKey by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = { TopAppBar(title = { Text(stringResource(R.string.settings_title)) }) },
@@ -39,17 +37,7 @@ fun SettingsScreen(
             Spacer(Modifier.height(20.dp))
 
             // ---- API key input ----
-            OutlinedTextField(
-                value = keyInput,
-                onValueChange = { keyInput = it },
-                label = { Text(stringResource(R.string.api_key_label)) },
-                singleLine = true,
-                visualTransformation = if (showKey) VisualTransformation.None else PasswordVisualTransformation(),
-                modifier = Modifier.fillMaxWidth(),
-            )
-            TextButton(onClick = { showKey = !showKey }) {
-                Text(stringResource(if (showKey) R.string.hide_key else R.string.show_key))
-            }
+            ApiKeyInputField(value = keyInput, onValueChange = { keyInput = it })
             Spacer(Modifier.height(24.dp))
 
             // ---- save / clear ----
@@ -97,6 +85,17 @@ fun SettingsScreen(
             ) {
                 Text(stringResource(R.string.back))
             }
+            Spacer(Modifier.height(8.dp))
+
+            // Temporary! Preview button for the onboarding screen
+            // Remove once real first-launch detection replaces this as the entry point
+            TextButton(
+                onClick = onPreviewOnboarding,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("Preview onboarding (temp)")
+            }
+
         }
     }
 }

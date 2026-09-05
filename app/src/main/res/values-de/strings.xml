@@ -72,4 +72,10 @@
     <string name="guide_step_2">Nach \"Routes API\" suchen und aktivieren</string>
     <string name="guide_step_3">Zu Anmeldedaten → Anmeldedaten erstellen → API-Schlüssel</string>
     <string name="guide_step_4">Schlüssel kopieren und unten einfügen</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title">Willkommen bei RouteWatcher</string>
+    <string name="onboarding_subtitle">Ein kurzer Einrichtungsschritt vor deiner ersten Route.</string>
+    <string name="save_and_continue">Speichern &amp; weiter</string>
+    <string name="skip_for_now">Später</string>
 </resources>

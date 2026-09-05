@@ -19,6 +19,8 @@ private sealed class Screen {
     data object AddEdit : Screen()
     data object Settings : Screen()
     data object PickRoad : Screen()
+    // Temporary! Only reachable via settings preview button for now
+    data object Onboarding : Screen()
 }
 
 // Top level screen router
@@ -96,6 +98,11 @@ fun RouteWatcherApp(
             onTestKey = { viewModel.testApiKey() },
             testResult = testResult,
             onBack = { screen = Screen.List },
+            onPreviewOnboarding = { screen = Screen.Onboarding },
+        )
+        is Screen.Onboarding -> OnboardingScreen(
+            onSaveKey = { key -> viewModel.saveApiKey(key) },
+            onFinished = { screen = Screen.List },
         )
         is Screen.PickRoad -> pickerState?.let { state ->
             RoutePickerScreen(

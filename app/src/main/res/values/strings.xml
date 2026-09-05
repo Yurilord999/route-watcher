@@ -72,4 +72,10 @@
     <string name="guide_step_2">Search for \"Routes API\" and enable it</string>
     <string name="guide_step_3">Go to Credentials → Create Credentials → API key</string>
     <string name="guide_step_4">Copy the key and paste it below</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title">Welcome to RouteWatcher</string>
+    <string name="onboarding_subtitle">One quick setup step before your first route.</string>
+    <string name="save_and_continue">Save &amp; continue</string>
+    <string name="skip_for_now">Skip for now</string>
 </resources>
