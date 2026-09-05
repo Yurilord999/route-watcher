@@ -34,6 +34,11 @@ fun SettingsScreen(
                 .padding(16.dp)
                 .fillMaxSize(),
         ) {
+            // ---- setup guide ----
+            CollapsibleApiKeyGuide(initiallyExpanded = currentKey.isNullOrBlank())
+            Spacer(Modifier.height(20.dp))
+
+            // ---- API key input ----
             OutlinedTextField(
                 value = keyInput,
                 onValueChange = { keyInput = it },
@@ -47,6 +52,7 @@ fun SettingsScreen(
             }
             Spacer(Modifier.height(24.dp))
 
+            // ---- save / clear ----
             Row {
                 Button(
                     onClick = { onSaveKey(keyInput) },
@@ -64,6 +70,7 @@ fun SettingsScreen(
             }
             Spacer(Modifier.height(24.dp))
 
+            // ---- test key ----
             OutlinedButton(
                 onClick = onTestKey,
                 modifier = Modifier.fillMaxWidth(),
@@ -83,6 +90,7 @@ fun SettingsScreen(
             }
             Spacer(Modifier.height(24.dp))
 
+            // ---- navigation ----
             OutlinedButton(
                 onClick = onBack,
                 modifier = Modifier.fillMaxWidth(),

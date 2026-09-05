@@ -65,4 +65,11 @@
     <!-- Settings - test key result -->
     <string name="test_key_success">Key works. Test route: %1$d min.</string>
     <string name="test_key_failed">Test failed: %1$s</string>
+
+    <!-- API key setup guide -->
+    <string name="guide_toggle_label">Need help getting a key?</string>
+    <string name="guide_step_1">Open Google Cloud Console</string>
+    <string name="guide_step_2">Search for \"Routes API\" and enable it</string>
+    <string name="guide_step_3">Go to Credentials → Create Credentials → API key</string>
+    <string name="guide_step_4">Copy the key and paste it below</string>
 </resources>

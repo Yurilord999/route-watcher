@@ -65,4 +65,11 @@
     <!-- Settings - test key result -->
     <string name="test_key_success">Schlüssel funktioniert. Testroute: %1$d Min.</string>
     <string name="test_key_failed">Test fehlgeschlagen: %1$s</string>
+
+    <!-- API key setup guide -->
+    <string name="guide_toggle_label">Hilfe beim Erstellen eines Schlüssels?</string>
+    <string name="guide_step_1">Google Cloud Console öffnen</string>
+    <string name="guide_step_2">Nach \"Routes API\" suchen und aktivieren</string>
+    <string name="guide_step_3">Zu Anmeldedaten → Anmeldedaten erstellen → API-Schlüssel</string>
+    <string name="guide_step_4">Schlüssel kopieren und unten einfügen</string>
 </resources>
