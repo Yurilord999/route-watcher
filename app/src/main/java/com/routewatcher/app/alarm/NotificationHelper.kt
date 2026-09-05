@@ -18,6 +18,9 @@ object NotificationHelper {
     private const val CHANNEL_ALERTS = "traffic_alerts"
     private const val CHANNEL_STATUS = "traffic_status"
 
+    //route.id 0 is always free for this one
+    private const val NOTIFICATION_ID_API_KEY_MISSING = 0
+
     fun ensureChannels(context: Context) {
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.createNotificationChannel(
@@ -92,6 +95,18 @@ object NotificationHelper {
         NotificationManagerCompat.from(context).notify(route.id.toInt() * 10 + 3, n)
     }
 
+    // For failures not tied to a specific route (zero routes enabled)
+    fun showApiKeyMissing(context: Context) {
+        val n = NotificationCompat.Builder(context, CHANNEL_STATUS)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentTitle(context.getString(R.string.notif_api_key_missing_title))
+            .setContentText(context.getString(R.string.notif_api_key_missing_text))
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setAutoCancel(true)
+            .setContentIntent(openAppIntent(context))
+            .build()
+        NotificationManagerCompat.from(context).notify(NOTIFICATION_ID_API_KEY_MISSING, n)
+    }
     private fun openAppIntent(context: Context): PendingIntent {
         val intent = Intent(context, MainActivity::class.java)
         return PendingIntent.getActivity(
