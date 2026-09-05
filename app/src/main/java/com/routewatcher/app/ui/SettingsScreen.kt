@@ -9,6 +9,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import com.routewatcher.app.R
+import com.routewatcher.app.network.errorMessageRes
+import com.routewatcher.app.viewmodel.ApiKeyTestResult
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -17,9 +19,8 @@ fun SettingsScreen(
     onSaveKey: (String) -> Unit,
     onClearKey: () -> Unit,
     onTestKey: () -> Unit,
-    testResultMessage: String?,
+    testResult: ApiKeyTestResult?,
     onBack: () -> Unit,
-    onTestRouteThroughStops: () -> Unit
 ) {
     var keyInput by remember { mutableStateOf(currentKey ?: "") }
     var showKey by remember { mutableStateOf(false) }
@@ -71,16 +72,14 @@ fun SettingsScreen(
             }
             Spacer(Modifier.height(8.dp))
 
-            // TEMPORARY! fetchRouteThroughStops test
-            OutlinedButton(
-                onClick = onTestRouteThroughStops,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text("Test route through stop (temp)")
-            }
-            testResultMessage?.let {
+            testResult?.let { result ->
                 Spacer(Modifier.height(8.dp))
-                Text(it, style = MaterialTheme.typography.bodyMedium)
+                val message = if (result.success) {
+                    stringResource(R.string.test_key_success, result.durationMinutes)
+                } else {
+                    stringResource(R.string.test_key_failed, stringResource(errorMessageRes(result.errorCode)))
+                }
+                Text(message, style = MaterialTheme.typography.bodyMedium)
             }
             Spacer(Modifier.height(24.dp))
 

@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextAlign
 import com.routewatcher.app.R
 import com.routewatcher.app.data.RouteEntity
 
@@ -55,7 +56,7 @@ fun RouteListScreen(
                         .fillMaxSize(),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(stringResource(R.string.no_routes_yet))
+                Text(stringResource(R.string.no_routes_yet), textAlign = TextAlign.Center)
             }
         } else {
             LazyColumn(

@@ -8,11 +8,12 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import org.json.JSONArray
 import java.util.concurrent.TimeUnit
+import java.util.Locale
 
 // One selectable road option returned by computeRoutes with alternatives
 data class RouteOption(
 
-    // Generic label ("Route 1")
+    // Generic label ("#1")
     // Routes API has no short route-name field like the old Directions API's "summary"
 
     val summary: String,
@@ -21,8 +22,6 @@ data class RouteOption(
     val encodedPolyline: String,
     val waypoints: List<Pair<Double, Double>>, // pinned points for future checks
 )
-
-// TODO: fetchRouteAlternatives is called by RoutePickerScreen
 
 object RoutesApiClient {
 
@@ -84,10 +83,7 @@ object RoutesApiClient {
         stops: List<Pair<Double, Double>>,
         apiKey: String,
     ): RouteOption? {
-        if (apiKey.isBlank()) {
-            Log.e("RoutesApiClient", "fetchRouteThroughStops: no API key set")
-            return null
-        }
+        if (apiKey.isBlank()) return null
 
         val body = JSONObject().apply {
             put("origin", JSONObject().put("address", origin))
@@ -107,7 +103,7 @@ object RoutesApiClient {
                                 ),
                             )
                             put("via", true)
-                            // TODO: Might fix some janky Google routing issues, to be tested
+                            // Fixes routing issues near divided / large roads
                             put("sideOfRoad", true)
                         },
                     )
@@ -148,7 +144,7 @@ object RoutesApiClient {
         waypoints: List<Pair<Double, Double>>,
         apiKey: String,
     ): TrafficResult {
-        if (apiKey.isBlank()) return TrafficResult(success = false, errorMessage = "No API key set")
+        if (apiKey.isBlank()) return TrafficResult(success = false, errorCode = TrafficErrorCode.NO_API_KEY)
 
         val body = JSONObject().apply {
             put("origin", JSONObject().put("address", origin))
@@ -180,11 +176,12 @@ object RoutesApiClient {
         return try {
             client.newCall(request).execute().use { response ->
                 val responseBody = response.body?.string()
-                    ?: return TrafficResult(false, errorMessage = "Empty response")
+                    ?: return TrafficResult(false, errorCode = TrafficErrorCode.EMPTY_RESPONSE)
                 parseTraffic(responseBody)
             }
         } catch (e: Exception) {
-            TrafficResult(success = false, errorMessage = e.message ?: "Network error")
+            Log.e("RoutesApiClient", "checkTrafficOnRoute: request failed", e)
+            TrafficResult(success = false, errorCode = TrafficErrorCode.NETWORK_ERROR)
         }
     }
 
@@ -214,8 +211,8 @@ object RoutesApiClient {
 
             result.add(
                 RouteOption(
-                    summary = "Route ${i + 1}",
-                    distanceText = "%.1f km".format(distanceMeters / 1000.0),
+                    summary = "#${i + 1}",
+                    distanceText = String.format(Locale.getDefault(), "%.1f km", distanceMeters / 1000.0),
                     durationMinutes = durationSeconds / 60,
                     encodedPolyline = polyline,
                     waypoints = derivePinningWaypoints(polyline),
@@ -229,7 +226,7 @@ object RoutesApiClient {
         val json = JSONObject(responseBody)
         val routes = json.optJSONArray("routes")
         if (routes == null || routes.length() == 0) {
-            return TrafficResult(success = false, errorMessage = "No route returned")
+            return TrafficResult(success = false, errorCode = TrafficErrorCode.NO_ROUTE_RETURNED)
         }
         val route = routes.getJSONObject(0)
 

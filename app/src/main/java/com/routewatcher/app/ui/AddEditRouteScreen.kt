@@ -99,7 +99,11 @@ fun AddEditRouteScreen(
             Spacer(Modifier.height(24.dp))
 
             Text(
-                if (lockedRouteSummary != null) "Picked road: $lockedRouteSummary" else "No specific road picked yet",
+                if (lockedRouteSummary != null) {
+                    stringResource(R.string.picked_road_summary, lockedRouteSummary)
+                } else {
+                    stringResource(R.string.no_road_picked)
+                },
                 style = MaterialTheme.typography.bodyMedium,
             )
             Spacer(Modifier.height(8.dp))
@@ -108,7 +112,7 @@ fun AddEditRouteScreen(
                 onClick = onPickRoad,
                 modifier = Modifier.fillMaxWidth(),
                 ) {
-                Text(if (lockedRouteSummary != null) "Change picked road" else "Pick road on map")
+                Text(stringResource(if (lockedRouteSummary != null) R.string.change_picked_road else R.string.pick_road_on_map))
                 }
             Spacer(Modifier.height(8.dp))
 

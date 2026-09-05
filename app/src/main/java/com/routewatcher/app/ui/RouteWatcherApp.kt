@@ -94,9 +94,8 @@ fun RouteWatcherApp(
             onSaveKey = { key -> viewModel.saveApiKey(key) },
             onClearKey = { viewModel.clearApiKey() },
             onTestKey = { viewModel.testApiKey() },
-            testResultMessage = testResult,
+            testResult = testResult,
             onBack = { screen = Screen.List },
-            onTestRouteThroughStops = { viewModel.testRouteThroughStops() }
         )
         is Screen.PickRoad -> pickerState?.let { state ->
             RoutePickerScreen(

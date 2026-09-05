@@ -38,7 +38,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Alignment
-
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -48,6 +49,7 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.rememberMarkerState
 import com.routewatcher.app.network.RouteOption
+import com.routewatcher.app.R
 
 // Lets the user pick their route of choice (similar to Google Maps)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -80,7 +82,7 @@ fun RoutePickerScreen(
         }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Pick your road") }) },
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.picker_title)) }) },
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
 
@@ -94,21 +96,21 @@ fun RoutePickerScreen(
                 Column(Modifier.fillMaxSize()) {
                     Text(
                         if (missingApiKey) {
-                            "No Routes API key is set, so routes can't be looked up yet."
+                            stringResource(R.string.no_api_key_picker)
                         } else {
-                            "Couldn't find any routes between those addresses."
+                            stringResource(R.string.no_routes_found)
                         },
                         modifier = Modifier.padding(16.dp),
                     )
                     Spacer(Modifier.weight(1f))
                     Row(Modifier.fillMaxWidth().padding(16.dp)) {
                         OutlinedButton(onClick = onCancel, modifier = Modifier.weight(1f)) {
-                            Text("Cancel")
+                            Text(stringResource(R.string.cancel))
                         }
                         if (missingApiKey) {
                             Spacer(Modifier.width(12.dp))
                             Button(onClick = onGoToSettings, modifier = Modifier.weight(1f)) {
-                                Text("Go to Settings")
+                                Text(stringResource(R.string.go_to_settings))
                             }
                         }
                     }
@@ -121,12 +123,12 @@ fun RoutePickerScreen(
                         selected = !isCustomizing,
                         onClick = { onModeChange(false) },
                         shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
-                    ) { Text("Browse") }
+                    ) { Text(stringResource(R.string.mode_browse)) }
                     SegmentedButton(
                         selected = isCustomizing,
                         onClick = { onModeChange(true) },
                         shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
-                    ) { Text("Customize") }
+                    ) { Text(stringResource(R.string.mode_customize)) }
                 }
 
                 val selected = routeOptions[selectedIndex]
@@ -175,7 +177,7 @@ fun RoutePickerScreen(
                                 Marker(
                                     state = markerState,
                                     draggable = true,
-                                    title = "Stop ${index + 1}",
+                                    title = stringResource(R.string.stop_label, index + 1),
                                 )
                             }
                         }
@@ -197,16 +199,16 @@ fun RoutePickerScreen(
                     Column(Modifier.fillMaxWidth().weight(0.6f).padding(12.dp)) {
                         when {
                             isRecomputing -> Text(
-                                "Recalculating route...",
+                                stringResource(R.string.recalculating_route),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                             customRoute != null -> Text(
-                                "${customRoute.distanceText} - about ${customRoute.durationMinutes} min right now",
+                                stringResource(R.string.route_eta_summary, customRoute.distanceText, customRoute.durationMinutes),
                                 style = MaterialTheme.typography.bodySmall,
                             )
                             else -> Text(
-                                "Tap the road to add a stop, drag a stop to move it. ",
+                                stringResource(R.string.customize_hint),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -223,7 +225,7 @@ fun RoutePickerScreen(
                                         .padding(horizontal = 10.dp, vertical = 6.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
-                                    Text("Stop ${index + 1}", style = MaterialTheme.typography.bodySmall)
+                                    Text(stringResource(R.string.stop_label, index + 1), style = MaterialTheme.typography.bodySmall)
                                     Spacer(Modifier.width(6.dp))
                                     Text(
                                         "×",
@@ -239,8 +241,9 @@ fun RoutePickerScreen(
 
                 Row(Modifier.fillMaxWidth().padding(16.dp)) {
                     OutlinedButton(onClick = onCancel, modifier = Modifier.weight(1f)) {
-                        Text("Cancel")
+                        Text(stringResource(R.string.cancel))
                     }
+                    val customRouteSummary = pluralStringResource(R.plurals.custom_route_summary, stops.size, stops.size)
                     Button(
                         onClick = {
                             // User placed stops are better pinning points than polyline derived guesses parseAlternatives would attach
@@ -249,7 +252,7 @@ fun RoutePickerScreen(
                             val toConfirm = if (isCustom) {
                                 customRoute.copy(
                                     waypoints = stops,
-                                    summary = "Custom route (${stops.size} stop${if (stops.size == 1) "" else "s"})",
+                                    summary = customRouteSummary,
                                 )
                             } else {
                                 selected
@@ -257,7 +260,7 @@ fun RoutePickerScreen(
                         onConfirm(toConfirm, isCustom) },
                         modifier = Modifier.weight(1f),
                     ) {
-                        Text("Use this road")
+                        Text(stringResource(R.string.use_this_road))
                     }
                 }
             }
@@ -278,7 +281,7 @@ private fun RouteOptionCard(option: RouteOption, isSelected: Boolean, onClick: (
         Column(Modifier.padding(12.dp)) {
             Text(option.summary, style = MaterialTheme.typography.titleSmall)
             Text(
-                "${option.distanceText} - about ${option.durationMinutes} min right now",
+                stringResource(R.string.route_eta_summary, option.distanceText, option.durationMinutes),
                 style = MaterialTheme.typography.bodySmall,
             )
         }

@@ -7,6 +7,7 @@ import com.routewatcher.app.alarm.NotificationHelper
 import com.routewatcher.app.data.AppDatabase
 import com.routewatcher.app.data.SettingsStore
 import com.routewatcher.app.network.RoutesApiClient
+import com.routewatcher.app.network.TrafficErrorCode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -24,7 +25,7 @@ class CheckNowActionReceiver : BroadcastReceiver() {
                 val routes = dao.getAllEnabled()
 
                 if (apiKey.isNullOrBlank()) {
-                    NotificationHelper.showCheckFailed(context, routes.firstOrNull() ?: return@launch, "No API key set")
+                    NotificationHelper.showCheckFailed(context, routes.firstOrNull() ?: return@launch, TrafficErrorCode.NO_API_KEY)
                     return@launch
                 }
 
@@ -42,7 +43,7 @@ class CheckNowActionReceiver : BroadcastReceiver() {
                             NotificationHelper.showAllClear(context, route, result, 0)
                         }
                     } else {
-                        NotificationHelper.showCheckFailed(context, route, result.errorMessage)
+                        NotificationHelper.showCheckFailed(context, route, result.errorCode)
                     }
                 }
             } finally {

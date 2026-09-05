@@ -20,4 +20,49 @@
     <string name="departure_minute">Minute</string>
     <string name="check_offsets">Minuten vorher prüfen (z.B. 60,30,10)</string>
     <string name="delay_threshold">Warnen ab Verzögerung (Min)</string>
+
+    <!-- Road picker -->
+    <string name="picker_title">Straße auswählen</string>
+    <string name="mode_browse">Durchsuchen</string>
+    <string name="mode_customize">Anpassen</string>
+    <string name="no_routes_found">Zwischen diesen Adressen wurden keine Routen gefunden.</string>
+    <string name="no_api_key_picker">Es ist kein Routes-API-Schlüssel hinterlegt, daher können noch keine Routen gesucht werden.</string>
+    <string name="go_to_settings">Zu den Einstellungen</string>
+    <string name="recalculating_route">Route wird neu berechnet…</string>
+    <string name="customize_hint">Tippe auf die Straße, um einen Stopp hinzuzufügen, ziehe einen Stopp, um ihn zu verschieben.</string>
+    <string name="use_this_road">Diese Straße verwenden</string>
+    <string name="route_eta_summary">%1$s – aktuell etwa %2$d Min.</string>
+    <string name="stop_label">Stopp %1$d</string>
+    <plurals name="custom_route_summary">
+        <item quantity="one">Eigene Route (%1$d Stopp)</item>
+        <item quantity="other">Eigene Route (%1$d Stopps)</item>
+    </plurals>
+
+    <!-- Add/edit route -->
+    <string name="picked_road_summary">Gewählte Straße: %1$s</string>
+    <string name="no_road_picked">Noch keine bestimmte Straße gewählt</string>
+    <string name="change_picked_road">Gewählte Straße ändern</string>
+    <string name="pick_road_on_map">Straße auf der Karte auswählen</string>
+
+    <!-- Notifications -->
+    <string name="channel_alerts_name">Stauwarnungen</string>
+    <string name="channel_status_name">Status der Routenprüfung</string>
+    <string name="notif_jam_title">Stau auf %1$s</string>
+    <string name="notif_jam_text">+%1$d Min. Verzögerung – Abfahrt in %2$d Min.</string>
+    <string name="notif_all_clear_title">%1$s: alles frei</string>
+    <string name="notif_all_clear_text">Keine Verzögerung – Abfahrt in %1$d Min.</string>
+    <string name="notif_check_failed_title">%1$s konnte nicht geprüft werden</string>
+    <string name="notif_api_key_missing_title">API-Schlüssel einrichten</string>
+    <string name="notif_api_key_missing_text">Ohne Schlüssel können keine Routen geprüft werden. Tippe hier für die Einstellungen.</string>
+
+    <!-- Shared error messages (traffic check failures, surfaced in notifications and the settings test result) -->
+    <string name="error_no_api_key_set">Kein API-Schlüssel hinterlegt. Öffne die Einstellungen, um einen hinzuzufügen.</string>
+    <string name="error_empty_response">Leere Antwort</string>
+    <string name="error_network">Netzwerkfehler</string>
+    <string name="error_no_route_returned">Keine Route erhalten</string>
+    <string name="error_unknown">Unbekannter Fehler</string>
+
+    <!-- Settings - test key result -->
+    <string name="test_key_success">Schlüssel funktioniert. Testroute: %1$d Min.</string>
+    <string name="test_key_failed">Test fehlgeschlagen: %1$s</string>
 </resources>

@@ -7,6 +7,7 @@ import android.os.PowerManager
 import com.routewatcher.app.data.AppDatabase
 import com.routewatcher.app.data.SettingsStore
 import com.routewatcher.app.network.RoutesApiClient
+import com.routewatcher.app.network.TrafficErrorCode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -41,7 +42,7 @@ class TrafficCheckReceiver : BroadcastReceiver() {
         val apiKey = SettingsStore(context).getApiKey()
 
         if (apiKey.isNullOrBlank()) {
-            NotificationHelper.showCheckFailed(context, route, "No API key set - open Settings")
+            NotificationHelper.showCheckFailed(context, route,TrafficErrorCode.NO_API_KEY)
         } else {
             val result = RoutesApiClient.checkTrafficOnRoute(
                 route.originAddress,
@@ -56,7 +57,7 @@ class TrafficCheckReceiver : BroadcastReceiver() {
                     NotificationHelper.showAllClear(context, route, result, offsetMinutes)
                 }
             } else {
-                NotificationHelper.showCheckFailed(context, route, result.errorMessage)
+                NotificationHelper.showCheckFailed(context, route, result.errorCode)
             }
         }
 

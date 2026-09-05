@@ -20,4 +20,49 @@
     <string name="departure_minute">Minute</string>
     <string name="check_offsets">Check minutes before (e.g. 60,30,10)</string>
     <string name="delay_threshold">Alert if delay is at least (min)</string>
+
+    <!-- Road picker -->
+    <string name="picker_title">Pick your road</string>
+    <string name="mode_browse">Browse</string>
+    <string name="mode_customize">Customize</string>
+    <string name="no_routes_found">Couldn\'t find any routes between those addresses.</string>
+    <string name="no_api_key_picker">No Routes API key is set, so routes can\'t be looked up yet.</string>
+    <string name="go_to_settings">Go to Settings</string>
+    <string name="recalculating_route">Recalculating route…</string>
+    <string name="customize_hint">Tap the road to add a stop, drag a stop to move it.</string>
+    <string name="use_this_road">Use this road</string>
+    <string name="route_eta_summary">%1$s - about %2$d min right now</string>
+    <string name="stop_label">Stop %1$d</string>
+    <plurals name="custom_route_summary">
+        <item quantity="one">Custom route (%1$d stop)</item>
+        <item quantity="other">Custom route (%1$d stops)</item>
+    </plurals>
+
+    <!-- Add/edit route -->
+    <string name="picked_road_summary">Picked road: %1$s</string>
+    <string name="no_road_picked">No specific road picked yet</string>
+    <string name="change_picked_road">Change picked road</string>
+    <string name="pick_road_on_map">Pick road on map</string>
+
+    <!-- Notifications -->
+    <string name="channel_alerts_name">Traffic jam alerts</string>
+    <string name="channel_status_name">Route check status</string>
+    <string name="notif_jam_title">Traffic jam on %1$s</string>
+    <string name="notif_jam_text">+%1$d min delay - leaves in %2$d min</string>
+    <string name="notif_all_clear_title">%1$s: all clear</string>
+    <string name="notif_all_clear_text">No delays - leaves in %1$d min</string>
+    <string name="notif_check_failed_title">Couldn\'t check %1$s</string>
+    <string name="notif_api_key_missing_title">Set up your API key</string>
+    <string name="notif_api_key_missing_text">Routes can\'t be checked without one. Tap to open Settings.</string>
+
+    <!-- Shared error messages (traffic check failures, surfaced in notifications and the settings test result) -->
+    <string name="error_no_api_key_set">No API key set. Open Settings to add one.</string>
+    <string name="error_empty_response">Empty response</string>
+    <string name="error_network">Network error</string>
+    <string name="error_no_route_returned">No route returned</string>
+    <string name="error_unknown">Unknown error</string>
+
+    <!-- Settings - test key result -->
+    <string name="test_key_success">Key works. Test route: %1$d min.</string>
+    <string name="test_key_failed">Test failed: %1$s</string>
 </resources>

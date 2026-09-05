@@ -10,6 +10,9 @@ import androidx.core.app.NotificationManagerCompat
 import com.routewatcher.app.MainActivity
 import com.routewatcher.app.data.RouteEntity
 import com.routewatcher.app.network.TrafficResult
+import com.routewatcher.app.R
+import com.routewatcher.app.network.TrafficErrorCode
+import com.routewatcher.app.network.errorMessageRes
 
 object NotificationHelper {
     private const val CHANNEL_ALERTS = "traffic_alerts"
@@ -18,18 +21,37 @@ object NotificationHelper {
     fun ensureChannels(context: Context) {
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.createNotificationChannel(
-            NotificationChannel(CHANNEL_ALERTS, "Traffic jam alerts", NotificationManager.IMPORTANCE_HIGH),
+            NotificationChannel(
+                CHANNEL_ALERTS,
+                context.getString(R.string.channel_alerts_name),
+                NotificationManager.IMPORTANCE_HIGH
+            ),
         )
         manager.createNotificationChannel(
-            NotificationChannel(CHANNEL_STATUS, "Route check status", NotificationManager.IMPORTANCE_LOW),
+            NotificationChannel(
+                CHANNEL_STATUS,
+                context.getString(R.string.channel_status_name),
+                NotificationManager.IMPORTANCE_LOW
+            ),
         )
     }
 
     fun showJamAlert(context: Context, route: RouteEntity, result: TrafficResult, offsetMinutes: Int) {
         val n = NotificationCompat.Builder(context, CHANNEL_ALERTS)
             .setSmallIcon(android.R.drawable.ic_dialog_alert)
-            .setContentTitle("Traffic jam on ${route.name}")
-            .setContentText("+${result.delayMinutes} min delay - leaves in $offsetMinutes min")
+            .setContentTitle(
+                context.getString(
+                    R.string.notif_jam_title,
+                    route.name
+                )
+            )
+            .setContentText(
+                context.getString(
+                    R.string.notif_jam_text,
+                    result.delayMinutes,
+                    offsetMinutes
+                )
+            )
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .setContentIntent(openAppIntent(context))
@@ -49,11 +71,20 @@ object NotificationHelper {
         NotificationManagerCompat.from(context).notify(route.id.toInt() * 10 + 2, n)
     }
 
-    fun showCheckFailed(context: Context, route: RouteEntity, error: String?) {
+    fun showCheckFailed(context: Context, route: RouteEntity, errorCode: TrafficErrorCode?) {
         val n = NotificationCompat.Builder(context, CHANNEL_STATUS)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle("Couldn't check ${route.name}")
-            .setContentText(error ?: "Unknown error")
+            .setContentTitle(
+                context.getString(
+                    R.string.notif_check_failed_title,
+                    route.name
+                )
+            )
+            .setContentText(
+                context.getString(
+                    errorMessageRes(errorCode)
+                )
+            )
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setAutoCancel(true)
             .setContentIntent(openAppIntent(context))

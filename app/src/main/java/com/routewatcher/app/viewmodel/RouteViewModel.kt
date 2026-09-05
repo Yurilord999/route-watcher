@@ -9,6 +9,7 @@ import com.routewatcher.app.data.SettingsStore
 import com.routewatcher.app.alarm.AlarmScheduler
 import com.routewatcher.app.network.RoutesApiClient
 import com.routewatcher.app.network.RouteOption
+import com.routewatcher.app.network.TrafficErrorCode
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -19,6 +20,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+
+// Data outcome of the "Test key now" button (SettingsScreen builds display text from this)
+data class ApiKeyTestResult(
+    val success: Boolean,
+    val durationMinutes: Int = 0,
+    val errorCode: TrafficErrorCode? = null,
+)
 
 // Single shared ViewModel for the whole app (screen navigation, list, add/edit, picker state, settings)
 class RouteViewModel(
@@ -32,8 +40,8 @@ class RouteViewModel(
     private val _apiKey = MutableStateFlow(settingsStore.getApiKey())
     val apiKey: StateFlow<String?> = _apiKey.asStateFlow()
 
-    private val _testResult = MutableStateFlow<String?>(null)
-    val testResult: StateFlow<String?> = _testResult.asStateFlow()
+    private val _testResult = MutableStateFlow<ApiKeyTestResult?>(null)
+    val testResult: StateFlow<ApiKeyTestResult?> = _testResult.asStateFlow()
 
     // Context is passed in per call, rather than held in the ViewModel
     // This avoids holding a reference which could outlive the activity
@@ -68,29 +76,11 @@ class RouteViewModel(
                 emptyList(),
                 key ?: "",
             )
-            _testResult.value = if (result.success) {
-                "Key works. Test route: ${result.trafficDurationMinutes} min."
-            } else {
-                "Test failed: ${result.errorMessage}"
-            }
-        }
-    }
-
-    // TEMPORARY! fetchRouteThroughStops test
-    fun testRouteThroughStops() {
-        val key = _apiKey.value
-        viewModelScope.launch(Dispatchers.IO) {
-            val result = RoutesApiClient.fetchRouteThroughStops(
-                "Dresden Hauptbahnhof, Dresden",
-                "Frauenkirche Dresden, Dresden",
-                listOf(51.0489 to 13.7443), // Pirnaischer Platz - roughly on the way
-                key ?: "",
+            _testResult.value = ApiKeyTestResult(
+                success = result.success,
+                durationMinutes = result.trafficDurationMinutes,
+                errorCode = result.errorCode,
             )
-            _testResult.value = if (result != null) {
-                "Through stop: ${result.distanceText}, ${result.durationMinutes} min"
-            } else {
-                "Failed - check Logcat (tag RoutesApiClient)"
-            }
         }
     }
 
