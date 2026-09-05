@@ -119,6 +119,11 @@ fun RouteWatcherApp(
                 onRemoveStop = { viewModel.removePickerStop(it) },
                 customRoute = state.customRoute,
                 isRecomputing = state.isRecomputing,
+                missingApiKey = state.missingApiKey,
+                onGoToSettings = {
+                    viewModel.cancelRoadPicker()
+                    screen = Screen.Settings
+                },
             )
         }
     }

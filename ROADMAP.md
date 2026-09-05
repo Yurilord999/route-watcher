@@ -17,13 +17,15 @@ automatic traffic checks, manual check via widget, notifications.
 10. Real traffic checks - scheduled and manual checks query Routes API now
 11. ViewModel refactor - list, settings, add/edit etc. live in RouteViewModel now
     (manual ViewModelFactory, no DI library)
-12. Custom waypoints - adding/editing/removing route detours in custome mode
+12. Custom waypoints - adding/editing/removing route detours in custom mode
 
 ## Next up
-Bugfixes
+Bugfixes: Widget fails silently when no routes/ no API key is set.
+Proper onboarding on start up (How does the App work, how to set up the API key).
+Localizing hard coded error messages etc. 
 
 ## Known limitations / redesign considerations
-- Route picker only offers Google's suggested alternatives (no custom waypoint/detour editing)
+- Polyline has no native drag support. Editing route through dragging is out of scope for now. 
 - Googles routing quality for nearby/short-distance custom stops is very bad.
   Probably limited routes API behavior. 
   Potential future workarounds: distance sanity checking a returned route before showing it?
@@ -38,5 +40,6 @@ Bugfixes
 - Cap API requests per day / month as a safeguard within Googles free tier 
 - No API key set = every function silently fails. Onboarding required.
 - No routes found screen (no API key set) is a dead end. Cancel/back button required
-- Marker drag is super clunky, takes too long
+- Marker drag is super clunky, takes too long. Needs a custom touch
+  listener / hit testing layer (Maps SDK has no drag timing setting)
 - General UI/visual polish needed

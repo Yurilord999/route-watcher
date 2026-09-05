@@ -66,6 +66,9 @@ fun RoutePickerScreen(
     onRemoveStop: (Int) -> Unit,
     customRoute: RouteOption?,
     isRecomputing: Boolean,
+    missingApiKey: Boolean,
+    onGoToSettings: () -> Unit,
+
 ) {
     // Match against whatever is already picked/saved
     // Reopening the picker shows the current choice instead of defaulting to the first option
@@ -88,10 +91,28 @@ fun RoutePickerScreen(
                     CircularProgressIndicator(Modifier.padding(32.dp))
                 }
             } else if (routeOptions.isEmpty()) {
-                Text(
-                    "Couldn't find any routes between those addresses.",
-                    modifier = Modifier.padding(16.dp),
-                )
+                Column(Modifier.fillMaxSize()) {
+                    Text(
+                        if (missingApiKey) {
+                            "No Routes API key is set, so routes can't be looked up yet."
+                        } else {
+                            "Couldn't find any routes between those addresses."
+                        },
+                        modifier = Modifier.padding(16.dp),
+                    )
+                    Spacer(Modifier.weight(1f))
+                    Row(Modifier.fillMaxWidth().padding(16.dp)) {
+                        OutlinedButton(onClick = onCancel, modifier = Modifier.weight(1f)) {
+                            Text("Cancel")
+                        }
+                        if (missingApiKey) {
+                            Spacer(Modifier.width(12.dp))
+                            Button(onClick = onGoToSettings, modifier = Modifier.weight(1f)) {
+                                Text("Go to Settings")
+                            }
+                        }
+                    }
+                }
             } else {
                 SingleChoiceSegmentedButtonRow(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),

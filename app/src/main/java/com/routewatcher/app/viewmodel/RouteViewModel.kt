@@ -168,16 +168,24 @@ class RouteViewModel(
     fun openRoadPicker() {
         val state = _editState.value ?: return
         val existingStops = if (state.isCustomRoute) decodeWaypoints(state.lockedRouteWaypoints) else emptyList()
+        val key = settingsStore.getApiKey()
+        val hasKey = !key.isNullOrBlank()
         _pickerState.value = RoutePickerState(
             origin = state.origin,
             destination = state.destination,
             isCustomizing = existingStops.isNotEmpty(),
             stops = existingStops,
+            isLoading = hasKey,
+            missingApiKey = !hasKey,
             )
-        viewModelScope.launch(Dispatchers.IO) {
-            val key = settingsStore.getApiKey() ?: ""
-            val options = RoutesApiClient.fetchRouteAlternatives(state.origin, state.destination, key)
-            _pickerState.value = _pickerState.value?.copy(routeOptions = options, isLoading = false)
+        // No point in calling the API without a key
+        if (hasKey) {
+            viewModelScope.launch(Dispatchers.IO) {
+                val options =
+                    RoutesApiClient.fetchRouteAlternatives(state.origin, state.destination, key)
+                _pickerState.value =
+                    _pickerState.value?.copy(routeOptions = options, isLoading = false)
+            }
         }
         // Recomputes right away so reopening a customized route shows its real
         if (existingStops.isNotEmpty()) scheduleStopRecompute()

@@ -52,6 +52,8 @@ data class RoutePickerState(
     val stops: List<Pair<Double, Double>> = emptyList(),
     val customRoute: RouteOption? = null,
     val isRecomputing: Boolean = false,
+    // Only true if there is no API key set (different to 0 routes found)
+    val missingApiKey: Boolean = false,
 )
 
 fun encodeWaypoints(waypoints: List<Pair<Double, Double>>): String =
