@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.background
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.border
 import androidx.compose.animation.AnimatedVisibility
@@ -49,6 +48,10 @@ fun RouteListScreen(
     onUpdateActiveDays: (RouteEntity, Int) -> Unit,
     onDeleteRoute: (RouteEntity) -> Unit,
 ){
+
+    // "locked mode" - while route panel is expanded, app gesture control is disabled (for Google gestures etc)
+    var expandedRouteIds by remember { mutableStateOf(setOf<Long>()) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -64,19 +67,21 @@ fun RouteListScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onAddRoute) {
-                Icon(
-                    Icons.Filled.Add,
-                    contentDescription = stringResource(R.string.add_route),
-                )
+            if (expandedRouteIds.isEmpty()) {
+                FloatingActionButton(onClick = onAddRoute) {
+                    Icon(
+                        Icons.Filled.Add,
+                        contentDescription = stringResource(R.string.add_route),
+                    )
+                }
             }
         }
     ) { padding ->
         if (routes.isEmpty()) {
             Box(
                 modifier = Modifier
-                        .padding(padding)
-                        .fillMaxSize(),
+                    .padding(padding)
+                    .fillMaxSize(),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(stringResource(R.string.no_routes_yet), textAlign = TextAlign.Center)
@@ -84,8 +89,9 @@ fun RouteListScreen(
         } else {
             LazyColumn(
                 modifier = Modifier
-                        .padding(padding)
-                        .fillMaxSize(),
+                    .padding(padding)
+                    .fillMaxSize(),
+                userScrollEnabled = expandedRouteIds.isEmpty(),
             ) {
                 items(routes, key = { it.id }) { route ->
                     RouteRow(
@@ -96,7 +102,17 @@ fun RouteListScreen(
                         onEditRoute = onEditRoute,
                         onToggleRoute = onToggleRoute,
                         onUpdateActiveDays = onUpdateActiveDays,
-                        onDeleteRoute = onDeleteRoute,
+                        onDeleteRoute = {  toDelete ->
+                            expandedRouteIds = expandedRouteIds - toDelete.id
+                            onDeleteRoute(toDelete)
+                        },
+                        onExpandedChanged = { isExpanded ->
+                            expandedRouteIds = if (isExpanded) {
+                                expandedRouteIds + route.id
+                            } else {
+                                expandedRouteIds - route.id
+                            }
+                        },
                     )
                     HorizontalDivider()
                 }
@@ -129,6 +145,7 @@ private fun RouteRow(
     onToggleRoute: (RouteEntity, Boolean) -> Unit,
     onUpdateActiveDays: (RouteEntity, Int) -> Unit,
     onDeleteRoute: (RouteEntity) -> Unit,
+    onExpandedChanged: (Boolean) -> Unit,
 ) {
     var expanded by remember(route.id) { mutableStateOf(false) }
     var activeDays by remember(route.id) { mutableStateOf(route.activeDays) }
@@ -190,7 +207,9 @@ private fun RouteRow(
                 }
                 if (checkStatus is RouteCheckStatus.Loading) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp).padding(end = 12.dp),
+                        modifier = Modifier
+                            .size(20.dp)
+                            .padding(end = 12.dp),
                         strokeWidth = 2.dp,
                     )
                 } else {
@@ -210,7 +229,10 @@ private fun RouteRow(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { expanded = true },
+                        .clickable {
+                            expanded = true
+                            onExpandedChanged(true)
+                        },
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -222,7 +244,7 @@ private fun RouteRow(
                     Text("\u25BE", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             } else {
-                // ---- expanded panel: large tappable circles, map placeholder, delete + collapse ----
+                // ---- expanded panel: large tappable circles, minimap, delete + collapse ----
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     daysForDisplay().forEach { (label, bit) ->
                         DayCircle(
@@ -237,12 +259,12 @@ private fun RouteRow(
                 }
                 Spacer(Modifier.height(12.dp))
 
-                // TODO: Placeholder route snapshot for now
-                Box(
+                // minimap
+                RouteMapSnapshot(
+                    route = route,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(100.dp)
-                        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp)),
+                        .aspectRatio(1f),
                 )
                 Spacer(Modifier.height(12.dp))
 
@@ -257,7 +279,10 @@ private fun RouteRow(
                             Spacer(Modifier.width(4.dp))
                             Text(stringResource(R.string.delete_route), color = MaterialTheme.colorScheme.error)
                         }
-                        IconButton(onClick = { expanded = false }) {
+                        IconButton(onClick = {
+                            expanded = false
+                            onExpandedChanged(false)
+                        }) {
                             Text("\u25B4", style = MaterialTheme.typography.titleMedium)
                         }
                     }

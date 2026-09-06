@@ -20,7 +20,7 @@ automatic traffic checks, manual check via widget, notifications.
 12. Custom waypoints - adding/editing/removing route detours in custom mode
 13. Onboarding - first launch guide screen & API guide in settings
 14. Expandable route list UI - day of the week icons, instant check, mini map view
-15. Day of the week scheduling - Repeating alarms + quick delete/ route check button
+15. Day of the week scheduling - Repeating alarms + quick delete/route check button
 
 ## Next up
 Route list minimap
@@ -34,9 +34,12 @@ Route list minimap
 ## Improvement backlog
 - Replace raw hour/minute text fields in AddEditRouteScreen with a real time picker
 - Add a Quick Settings Tile as an alternative to the home screen widget
-- Improved visibility (in app / widget ): on glance results
-- Cap API requests per day / month as a safeguard within Googles free tier
+- Improved visibility (in app/widget ): on glance results
+- Cap API requests per day/month as a safeguard within Googles free tier
 - Marker drag is super clunky, takes too long. Needs a custom touch
-  listener / hit testing layer (Maps SDK has no drag timing setting)
-- Route list fold / unfold smooth sliding transition
+  listener/hit testing layer (Maps SDK has no drag timing setting)
+- Route list fold/unfold smooth sliding transition
+- Add/Edit form has no initial day of week UI
+- Bug: new route defaults are wrong. Routes start off disabled & are selected for Wed-Sun
+- Long origin/destination address truncation required
 - General UI/visual polish needed
