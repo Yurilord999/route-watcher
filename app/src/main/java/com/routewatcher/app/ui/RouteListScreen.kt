@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.border
@@ -21,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -34,6 +36,7 @@ import com.routewatcher.app.data.RouteEntity
 import com.routewatcher.app.network.TrafficErrorCode
 import com.routewatcher.app.network.errorMessageRes
 import com.routewatcher.app.viewmodel.RouteCheckStatus
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,6 +54,8 @@ fun RouteListScreen(
 
     // "locked mode" - while route panel is expanded, app gesture control is disabled (for Google gestures etc)
     var expandedRouteIds by remember { mutableStateOf(setOf<Long>()) }
+    val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -91,6 +96,7 @@ fun RouteListScreen(
                 modifier = Modifier
                     .padding(padding)
                     .fillMaxSize(),
+                state = listState,
                 userScrollEnabled = expandedRouteIds.isEmpty(),
             ) {
                 items(routes, key = { it.id }) { route ->
@@ -111,6 +117,14 @@ fun RouteListScreen(
                                 expandedRouteIds + route.id
                             } else {
                                 expandedRouteIds - route.id
+                            }
+                            if (isExpanded) {
+                                val index = routes.indexOfFirst { it.id == route.id }
+                                if (index >= 0) {
+                                    coroutineScope.launch {
+                                        listState.animateScrollToItem(index)
+                                    }
+                                }
                             }
                         },
                     )

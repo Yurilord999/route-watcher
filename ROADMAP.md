@@ -21,15 +21,20 @@ automatic traffic checks, manual check via widget, notifications.
 13. Onboarding - first launch guide screen & API guide in settings
 14. Expandable route list UI - day of the week icons, instant check, mini map view
 15. Day of the week scheduling - Repeating alarms + quick delete/route check button
+16. Minimap - an expandable, interactive map for each route. Shows traffic congestion.
 
 ## Next up
-Route list minimap
+"Open in Google Maps" button for routes.
+Notification & Widget pointers towards route details when jams are detected.
+Add/Edit form UI for day of week scheduling + Route default day bugfix 
 
 ## Known limitations / redesign considerations
 - Polyline has no native drag support. Editing route through dragging is out of scope for now. 
 - Googles routing quality for nearby/short-distance custom stops is very bad.
   Probably limited routes API behavior. 
   Potential future workarounds: distance sanity checking a returned route before showing it?
+- Add/edit form has considerable downsides: no route autocomplete, no visual feedback etc.
+  Combining it with Places SDK for one-screen solution (visual route picking & autocomplete)  
 
 ## Improvement backlog
 - Replace raw hour/minute text fields in AddEditRouteScreen with a real time picker
@@ -39,7 +44,7 @@ Route list minimap
 - Marker drag is super clunky, takes too long. Needs a custom touch
   listener/hit testing layer (Maps SDK has no drag timing setting)
 - Route list fold/unfold smooth sliding transition
-- Add/Edit form has no initial day of week UI
-- Bug: new route defaults are wrong. Routes start off disabled & are selected for Wed-Sun
 - Long origin/destination address truncation required
+- Bug: Collapse button for expanded routes is hidden bellow the screen, while scrolling is disabled
+  due to minimap.
 - General UI/visual polish needed
