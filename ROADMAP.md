@@ -19,9 +19,10 @@ automatic traffic checks, manual check via widget, notifications.
     (manual ViewModelFactory, no DI library)
 12. Custom waypoints - adding/editing/removing route detours in custom mode
 13. Onboarding - first launch guide screen & API guide in settings
+14. Expandable route list UI - day of the week icons, instant check, mini map view
 
 ## Next up
-Custom day of the week alarms
+Custom day of the week alarms (wiring all buttons)
 
 ## Known limitations / redesign considerations
 - Polyline has no native drag support. Editing route through dragging is out of scope for now. 
@@ -37,4 +38,5 @@ Custom day of the week alarms
 - Cap API requests per day / month as a safeguard within Googles free tier
 - Marker drag is super clunky, takes too long. Needs a custom touch
   listener / hit testing layer (Maps SDK has no drag timing setting)
+- Route list fold / unfold smooth sliding transition
 - General UI/visual polish needed

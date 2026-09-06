@@ -10,6 +10,7 @@ import com.routewatcher.app.alarm.AlarmScheduler
 import com.routewatcher.app.network.RoutesApiClient
 import com.routewatcher.app.network.RouteOption
 import com.routewatcher.app.network.TrafficErrorCode
+import com.routewatcher.app.network.TrafficResult
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -28,6 +29,12 @@ data class ApiKeyTestResult(
     val errorCode: TrafficErrorCode? = null,
 )
 
+// Per route "check now" status. Shown inline in RouteListScreen (session only)
+sealed class RouteCheckStatus {
+    object Loading : RouteCheckStatus()
+    data class Done(val result: TrafficResult) : RouteCheckStatus()
+}
+
 // Single shared ViewModel for the whole app (screen navigation, list, add/edit, picker state, settings)
 class RouteViewModel(
     private val dao: RouteDao,
@@ -42,6 +49,23 @@ class RouteViewModel(
 
     private val _testResult = MutableStateFlow<ApiKeyTestResult?>(null)
     val testResult: StateFlow<ApiKeyTestResult?> = _testResult.asStateFlow()
+
+    private val _checkStatuses = MutableStateFlow<Map<Long, RouteCheckStatus>>(emptyMap())
+    val checkStatuses: StateFlow<Map<Long, RouteCheckStatus>> = _checkStatuses.asStateFlow()
+
+    // Instant check (in app)
+    fun checkRouteNow(route: RouteEntity) {
+        _checkStatuses.value = _checkStatuses.value + (route.id to RouteCheckStatus.Loading)
+        viewModelScope.launch(Dispatchers.IO) {
+            val result = RoutesApiClient.checkTrafficOnRoute(
+                route.originAddress,
+                route.destinationAddress,
+                route.lockedWaypointsList(),
+                settingsStore.getApiKey() ?: "",
+            )
+            _checkStatuses.value = _checkStatuses.value + (route.id to RouteCheckStatus.Done(result))
+        }
+    }
 
     // Context is passed in per call, rather than held in the ViewModel
     // This avoids holding a reference which could outlive the activity

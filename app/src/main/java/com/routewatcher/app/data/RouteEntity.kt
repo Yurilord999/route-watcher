@@ -41,5 +41,14 @@ data class RouteEntity(
             }
             ?: emptyList()
 
-    // TODO: AlarmScheduler should read offsetsList() + activeDays to compute each alarm's trigger time
+    companion object {
+        // Matches AlarmScheduler.dayBitFor() exactly. Do not change without updating it
+        const val MONDAY = 1
+        const val TUESDAY = 2
+        const val WEDNESDAY = 4
+        const val THURSDAY = 8
+        const val FRIDAY = 16
+        const val SATURDAY = 32
+        const val SUNDAY = 64
+    }
 }

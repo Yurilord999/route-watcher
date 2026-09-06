@@ -78,4 +78,12 @@
     <string name="onboarding_subtitle">Ein kurzer Einrichtungsschritt vor deiner ersten Route.</string>
     <string name="save_and_continue">Speichern &amp; weiter</string>
     <string name="skip_for_now">Später</string>
+
+    <!-- Delete confirmation -->
+    <string name="delete_route_confirm_title">Diese Route löschen?</string>
+
+    <!-- In-app check now -->
+    <string name="check_now">Jetzt prüfen</string>
+    <string name="check_result_jam">+%1$d Min. Verzögerung</string>
+    <string name="check_result_clear">Frei - %1$d Min.</string>
 </resources>

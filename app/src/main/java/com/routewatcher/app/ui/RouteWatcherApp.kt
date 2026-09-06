@@ -47,6 +47,8 @@ fun RouteWatcherApp(
     val testResult by viewModel.testResult.collectAsState()
     val editState by viewModel.editState.collectAsState()
     val pickerState by viewModel.pickerState.collectAsState()
+    val checkStatuses by viewModel.checkStatuses.collectAsState()
+
 
     when (screen) {
         is Screen.List -> RouteListScreen(
@@ -62,6 +64,8 @@ fun RouteWatcherApp(
                 viewModel.toggleRoute(context, route, enabled)
             },
             onOpenSettings = { screen = Screen.Settings },
+            checkStatuses = checkStatuses,
+            onCheckNow = { viewModel.checkRouteNow(it) },
         )
         is Screen.AddEdit -> editState?.let { state ->
             AddEditRouteScreen(
