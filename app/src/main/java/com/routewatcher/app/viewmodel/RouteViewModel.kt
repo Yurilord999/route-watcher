@@ -81,6 +81,21 @@ class RouteViewModel(
         }
     }
 
+    // scheduleAllForRoute cancels & reschedules internally,
+    // no-ops after canceling if the route is disabled
+    fun updateActiveDays(context: Context, route: RouteEntity, activeDays: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val updated = route.copy(activeDays = activeDays)
+            dao.upsert(updated)
+            AlarmScheduler.scheduleAllForRoute(context, updated)
+        }
+    }
+
+    fun deleteRoute(context: Context, route: RouteEntity) {
+        AlarmScheduler.cancelAllForRoute(context, route.id)
+        viewModelScope.launch(Dispatchers.IO) { dao.delete(route) }
+    }
+
     fun saveApiKey(key: String) {
         settingsStore.setApiKey(key)
         _apiKey.value = key

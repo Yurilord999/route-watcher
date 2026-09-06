@@ -66,6 +66,8 @@ fun RouteWatcherApp(
             onOpenSettings = { screen = Screen.Settings },
             checkStatuses = checkStatuses,
             onCheckNow = { viewModel.checkRouteNow(it) },
+            onUpdateActiveDays = { route, activeDays -> viewModel.updateActiveDays(context, route, activeDays) },
+            onDeleteRoute = { viewModel.deleteRoute(context, it) },
         )
         is Screen.AddEdit -> editState?.let { state ->
             AddEditRouteScreen(

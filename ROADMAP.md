@@ -20,9 +20,10 @@ automatic traffic checks, manual check via widget, notifications.
 12. Custom waypoints - adding/editing/removing route detours in custom mode
 13. Onboarding - first launch guide screen & API guide in settings
 14. Expandable route list UI - day of the week icons, instant check, mini map view
+15. Day of the week scheduling - Repeating alarms + quick delete/ route check button
 
 ## Next up
-Custom day of the week alarms (wiring all buttons)
+Route list minimap
 
 ## Known limitations / redesign considerations
 - Polyline has no native drag support. Editing route through dragging is out of scope for now. 
@@ -33,7 +34,6 @@ Custom day of the week alarms (wiring all buttons)
 ## Improvement backlog
 - Replace raw hour/minute text fields in AddEditRouteScreen with a real time picker
 - Add a Quick Settings Tile as an alternative to the home screen widget
-- Day of the week scheduling (+snooze button?)
 - Improved visibility (in app / widget ): on glance results
 - Cap API requests per day / month as a safeguard within Googles free tier
 - Marker drag is super clunky, takes too long. Needs a custom touch

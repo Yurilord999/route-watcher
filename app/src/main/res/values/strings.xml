@@ -86,4 +86,14 @@
     <string name="check_now">Check now</string>
     <string name="check_result_jam">+%1$d min delay</string>
     <string name="check_result_clear">Clear - %1$d min</string>
+
+    <!-- day of week display -->
+    <string name="route_direction_summary">%1$s → %2$s</string>
+    <string name="day_abbrev_monday">Mon</string>
+    <string name="day_abbrev_tuesday">Tue</string>
+    <string name="day_abbrev_wednesday">Wed</string>
+    <string name="day_abbrev_thursday">Thu</string>
+    <string name="day_abbrev_friday">Fri</string>
+    <string name="day_abbrev_saturday">Sat</string>
+    <string name="day_abbrev_sunday">Sun</string>
 </resources>

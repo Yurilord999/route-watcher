@@ -46,6 +46,8 @@ fun RouteListScreen(
     onOpenSettings: () -> Unit,
     checkStatuses: Map<Long, RouteCheckStatus>,
     onCheckNow: (RouteEntity) -> Unit,
+    onUpdateActiveDays: (RouteEntity, Int) -> Unit,
+    onDeleteRoute: (RouteEntity) -> Unit,
 ){
     Scaffold(
         topBar = {
@@ -93,6 +95,8 @@ fun RouteListScreen(
                         onOpenSettings = onOpenSettings,
                         onEditRoute = onEditRoute,
                         onToggleRoute = onToggleRoute,
+                        onUpdateActiveDays = onUpdateActiveDays,
+                        onDeleteRoute = onDeleteRoute,
                     )
                     HorizontalDivider()
                 }
@@ -103,19 +107,18 @@ fun RouteListScreen(
 
 // ---- day of week display order ----
 // Bit values must match RouteEntity constants (shared with AlarmScheduler.dayBitFor)
-private val DAYS_FOR_DISPLAY = listOf(
-    "S" to RouteEntity.SUNDAY,
-    "M" to RouteEntity.MONDAY,
-    "T" to RouteEntity.TUESDAY,
-    "W" to RouteEntity.WEDNESDAY,
-    "T" to RouteEntity.THURSDAY,
-    "F" to RouteEntity.FRIDAY,
-    "S" to RouteEntity.SATURDAY,
+@Composable
+private fun daysForDisplay(): List<Pair<String, Int>> = listOf(
+    stringResource(R.string.day_abbrev_monday) to RouteEntity.MONDAY,
+    stringResource(R.string.day_abbrev_tuesday) to RouteEntity.TUESDAY,
+    stringResource(R.string.day_abbrev_wednesday) to RouteEntity.WEDNESDAY,
+    stringResource(R.string.day_abbrev_thursday) to RouteEntity.THURSDAY,
+    stringResource(R.string.day_abbrev_friday) to RouteEntity.FRIDAY,
+    stringResource(R.string.day_abbrev_saturday) to RouteEntity.SATURDAY,
+    stringResource(R.string.day_abbrev_sunday) to RouteEntity.SUNDAY,
 )
 
 // ---- single expandable route row ----
-
-// TODO: Day toggle and delete are local only for now, not wired to the database
 @Composable
 private fun RouteRow(
     route: RouteEntity,
@@ -124,13 +127,12 @@ private fun RouteRow(
     onOpenSettings: () -> Unit,
     onEditRoute: (RouteEntity) -> Unit,
     onToggleRoute: (RouteEntity, Boolean) -> Unit,
+    onUpdateActiveDays: (RouteEntity, Int) -> Unit,
+    onDeleteRoute: (RouteEntity) -> Unit,
 ) {
     var expanded by remember(route.id) { mutableStateOf(false) }
     var activeDays by remember(route.id) { mutableStateOf(route.activeDays) }
     var confirmingDelete by remember(route.id) { mutableStateOf(false) }
-    var removed by remember(route.id) { mutableStateOf(false) }
-
-    if (removed) return
 
     Column {
         // ---- check-now result banner ----
@@ -213,8 +215,8 @@ private fun RouteRow(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                        DAYS_FOR_DISPLAY.forEach { (label, bit) ->
-                            DayDot(label = label, active = (activeDays and bit) != 0)
+                        daysForDisplay().forEach { (label, bit) ->
+                            DayDot(label = label.take(1), active = (activeDays and bit) != 0)
                         }
                     }
                     Text("\u25BE", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -222,11 +224,14 @@ private fun RouteRow(
             } else {
                 // ---- expanded panel: large tappable circles, map placeholder, delete + collapse ----
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    DAYS_FOR_DISPLAY.forEach { (label, bit) ->
+                    daysForDisplay().forEach { (label, bit) ->
                         DayCircle(
                             label = label,
                             active = (activeDays and bit) != 0,
-                            onClick = { activeDays = activeDays xor bit },
+                            onClick = {
+                                activeDays = activeDays xor bit
+                                onUpdateActiveDays(route, activeDays)
+                            },
                         )
                     }
                 }
@@ -267,7 +272,7 @@ private fun RouteRow(
                             TextButton(onClick = { confirmingDelete = false }) {
                                 Text(stringResource(R.string.cancel))
                             }
-                            TextButton(onClick = { removed = true }) {
+                            TextButton(onClick = { onDeleteRoute(route) }) {
                                 Text(stringResource(R.string.delete_route), color = MaterialTheme.colorScheme.error)
                             }
                         }

@@ -8,8 +8,7 @@ import com.routewatcher.app.data.RouteEntity
 import java.util.Calendar
 
 // Schedules one alarm per (route, check-offset) pair, for the next upcoming active day
-// Uses setAlarmClock() so Doze/App Standby cannot delay it
-// TODO: called from MainActivity's onToggleRoute/onSave once the UI is done. (Not used yet)
+// Uses setAlarmClock() so Doze / App Standby can't delay it
 
 object AlarmScheduler {
 

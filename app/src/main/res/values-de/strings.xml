@@ -86,4 +86,14 @@
     <string name="check_now">Jetzt prüfen</string>
     <string name="check_result_jam">+%1$d Min. Verzögerung</string>
     <string name="check_result_clear">Frei - %1$d Min.</string>
+
+    <!-- day of week display -->
+    <string name="route_direction_summary">%1$s → %2$s</string>
+    <string name="day_abbrev_monday">Mo</string>
+    <string name="day_abbrev_tuesday">Di</string>
+    <string name="day_abbrev_wednesday">Mi</string>
+    <string name="day_abbrev_thursday">Do</string>
+    <string name="day_abbrev_friday">Fr</string>
+    <string name="day_abbrev_saturday">Sa</string>
+    <string name="day_abbrev_sunday">So</string>
 </resources>
