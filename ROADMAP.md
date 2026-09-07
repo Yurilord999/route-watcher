@@ -22,10 +22,10 @@ automatic traffic checks, manual check via widget, notifications.
 14. Expandable route list UI - day of the week icons, instant check, mini map view
 15. Day of the week scheduling - Repeating alarms + quick delete/route check button
 16. Minimap - an expandable, interactive map for each route. Shows traffic congestion.
+17. Handoffs - "Open in Google Maps" button & jam detection handling for notifications / in app 
+    (Deep-link to auto-expanded, congested route)
 
 ## Next up
-"Open in Google Maps" button for routes.
-Notification & Widget pointers towards route details when jams are detected.
 Add/Edit form UI for day of week scheduling + Route default day bugfix 
 
 ## Known limitations / redesign considerations
@@ -39,12 +39,10 @@ Add/Edit form UI for day of week scheduling + Route default day bugfix
 ## Improvement backlog
 - Replace raw hour/minute text fields in AddEditRouteScreen with a real time picker
 - Add a Quick Settings Tile as an alternative to the home screen widget
-- Improved visibility (in app/widget ): on glance results
+- Full widget overhaul
 - Cap API requests per day/month as a safeguard within Googles free tier
 - Marker drag is super clunky, takes too long. Needs a custom touch
   listener/hit testing layer (Maps SDK has no drag timing setting)
 - Route list fold/unfold smooth sliding transition
 - Long origin/destination address truncation required
-- Bug: Collapse button for expanded routes is hidden bellow the screen, while scrolling is disabled
-  due to minimap.
 - General UI/visual polish needed

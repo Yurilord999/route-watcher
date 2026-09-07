@@ -34,6 +34,11 @@ object RoutesApiClient {
     private const val BASE_URL = "https://routes.googleapis.com/directions/v2:computeRoutes"
     private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
 
+
+    // ---- Temporary! Testing forced traffic jam ----
+    const val TEST_JAM_ORIGIN = "TEST_JAM"
+    // ---- Temporary! Testing forced traffic jam ----
+
     // ---- public API ----
 
     fun fetchRouteAlternatives(origin: String, destination: String, apiKey: String): List<RouteOption> {
@@ -144,6 +149,18 @@ object RoutesApiClient {
         waypoints: List<Pair<Double, Double>>,
         apiKey: String,
     ): TrafficResult {
+
+        // ---- Temporary! Testing forced traffic jam ----
+        if (origin == TEST_JAM_ORIGIN) {
+            return TrafficResult(
+                success = true,
+                normalDurationMinutes = 15,
+                trafficDurationMinutes = 45,
+                delayMinutes = 30,
+            )
+        }
+        // ---- Temporary! Testing forced traffic jam ----
+
         if (apiKey.isBlank()) return TrafficResult(success = false, errorCode = TrafficErrorCode.NO_API_KEY)
 
         val body = JSONObject().apply {

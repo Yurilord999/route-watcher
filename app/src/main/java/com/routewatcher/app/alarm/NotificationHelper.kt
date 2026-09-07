@@ -63,7 +63,7 @@ object NotificationHelper {
             )
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
-            .setContentIntent(openAppIntent(context))
+            .setContentIntent(openRouteIntent(context, route))
             .addAction(
                 android.R.drawable.ic_menu_directions,
                 context.getString(R.string.open_in_maps),
@@ -150,6 +150,19 @@ object NotificationHelper {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
     }
+
+    // Deep link to a specific, congested, expanded route in route list.
+    private fun openRouteIntent(context: Context, route: RouteEntity): PendingIntent {
+        val intent = Intent(context, MainActivity::class.java)
+            .putExtra(MainActivity.EXTRA_EXPAND_ROUTE_ID, route.id)
+        return PendingIntent.getActivity(
+            context,
+            route.id.toInt() * 10 + REQUEST_CODE_OPEN_ROUTE_OFFSET,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+    }
+
     // Google Maps hotkey for the given route
     private fun openMapsIntent(context: Context, route: RouteEntity): PendingIntent {
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(route.directionsUrl()))
@@ -163,4 +176,5 @@ object NotificationHelper {
     private const val REQUEST_CODE_OPEN_APP = 0
     private const val REQUEST_CODE_OPEN_SETTINGS = 1
     private const val REQUEST_CODE_OPEN_MAPS_OFFSET = 4
+    private const val REQUEST_CODE_OPEN_ROUTE_OFFSET = 6
 }

@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.routewatcher.app.data.RouteDao
@@ -29,6 +30,7 @@ fun RouteWatcherApp(
     settingsStore: SettingsStore,
     onRequestExactAlarmPermission: () -> Unit,
     openSettingsOnStart: Boolean = false,
+    expandRouteIdOnStart: Long? = null,
 ) {
     val context = LocalContext.current
     val viewModel: RouteViewModel = viewModel(factory = RouteViewModelFactory(dao, settingsStore))
@@ -49,6 +51,10 @@ fun RouteWatcherApp(
     val pickerState by viewModel.pickerState.collectAsState()
     val checkStatuses by viewModel.checkStatuses.collectAsState()
 
+    var pendingExpandRouteId by remember { mutableStateOf(expandRouteIdOnStart) }
+    LaunchedEffect(Unit) {
+        viewModel.autoExpandRouteId.collect { routeId -> pendingExpandRouteId = routeId }
+    }
 
     when (screen) {
         is Screen.List -> RouteListScreen(
@@ -68,6 +74,8 @@ fun RouteWatcherApp(
             onCheckNow = { viewModel.checkRouteNow(it) },
             onUpdateActiveDays = { route, activeDays -> viewModel.updateActiveDays(context, route, activeDays) },
             onDeleteRoute = { viewModel.deleteRoute(context, it) },
+            pendingExpandRouteId = pendingExpandRouteId,
+            onPendingExpandConsumed = { pendingExpandRouteId = null },
         )
         is Screen.AddEdit -> editState?.let { state ->
             AddEditRouteScreen(

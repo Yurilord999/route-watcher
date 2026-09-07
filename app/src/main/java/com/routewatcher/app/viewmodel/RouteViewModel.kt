@@ -14,6 +14,9 @@ import com.routewatcher.app.network.TrafficResult
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -53,6 +56,9 @@ class RouteViewModel(
     private val _checkStatuses = MutableStateFlow<Map<Long, RouteCheckStatus>>(emptyMap())
     val checkStatuses: StateFlow<Map<Long, RouteCheckStatus>> = _checkStatuses.asStateFlow()
 
+    private val _autoExpandRouteId = MutableSharedFlow<Long>()
+    val autoExpandRouteId: SharedFlow<Long> = _autoExpandRouteId.asSharedFlow()
+
     // Instant check (in app)
     fun checkRouteNow(route: RouteEntity) {
         _checkStatuses.value = _checkStatuses.value + (route.id to RouteCheckStatus.Loading)
@@ -64,6 +70,9 @@ class RouteViewModel(
                 settingsStore.getApiKey() ?: "",
             )
             _checkStatuses.value = _checkStatuses.value + (route.id to RouteCheckStatus.Done(result))
+            if (result.success && result.delayMinutes >= route.delayThresholdMinutes) {
+                _autoExpandRouteId.emit(route.id)
+            }
         }
     }
 

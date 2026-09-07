@@ -23,4 +23,16 @@ class RoutesApiClientTest {
         assertTrue(Math.abs(points[0].first - 38.5) < 0.001)
         assertTrue(Math.abs(points[0].second - (-120.2)) < 0.001)
     }
+
+    @Test
+    fun checkTrafficOnRoute_testJamOrigin_alwaysReportsADelay_noApiKeyNeeded() {
+        val result = RoutesApiClient.checkTrafficOnRoute(
+            RoutesApiClient.TEST_JAM_ORIGIN,
+            "anywhere",
+            emptyList(),
+            "",
+        )
+        assertTrue(result.success)
+        assertTrue(result.delayMinutes > 0)
+    }
 }

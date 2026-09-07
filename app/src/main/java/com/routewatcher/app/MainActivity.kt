@@ -34,6 +34,7 @@ class MainActivity : ComponentActivity() {
         val dao = AppDatabase.get(this).routeDao()
         val settingsStore = SettingsStore(this)
         val openSettingsOnStart = intent.getBooleanExtra(EXTRA_OPEN_SETTINGS, false)
+        val expandRouteIdOnStart = intent.getLongExtra(EXTRA_EXPAND_ROUTE_ID, -1L).takeIf { it != -1L }
 
 
         setContent {
@@ -43,6 +44,7 @@ class MainActivity : ComponentActivity() {
                     settingsStore = settingsStore,
                     onRequestExactAlarmPermission = { maybeRequestExactAlarmPermission() },
                     openSettingsOnStart = openSettingsOnStart,
+                    expandRouteIdOnStart = expandRouteIdOnStart,
                 )
             }
         }
@@ -72,5 +74,6 @@ class MainActivity : ComponentActivity() {
     }
     companion object {
         const val EXTRA_OPEN_SETTINGS = "open_settings"
+        const val EXTRA_EXPAND_ROUTE_ID = "expand_route_id"
     }
 }

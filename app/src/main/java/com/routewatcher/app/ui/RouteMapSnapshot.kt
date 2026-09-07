@@ -14,6 +14,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
@@ -22,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.input.pointer.pointerInput
 import com.routewatcher.app.data.RouteEntity
 import com.routewatcher.app.network.RoutesApiClient
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -38,7 +42,7 @@ import com.google.maps.android.compose.MapEffect
 // Reuses Maps SDK compose library already used in RoutePickerScreen
 // No network call of its own (just renders an already decoded polyline locally)
 @Composable
-fun RouteMapSnapshot(route: RouteEntity, modifier: Modifier = Modifier) {
+fun RouteMapSnapshot(route: RouteEntity, modifier: Modifier = Modifier, onMovingChanged: (Boolean) -> Unit) {
     val polyline = route.lockedRoutePolyline
     if (polyline.isNullOrBlank()) {
         EmptyMapPlaceholder(modifier)
@@ -70,7 +74,17 @@ fun RouteMapSnapshot(route: RouteEntity, modifier: Modifier = Modifier) {
         }
     }
 
-    Box(modifier = modifier) {
+    Box(
+        modifier = modifier.pointerInput(Unit ) {
+            // Watches for a finger scroll on just this map
+            awaitEachGesture {
+                awaitFirstDown(requireUnconsumed = false)
+                onMovingChanged(true)
+                waitForUpOrCancellation()
+                onMovingChanged(false)
+            }
+        },
+    ) {
         GoogleMap(
             modifier = modifier
                 .fillMaxSize()

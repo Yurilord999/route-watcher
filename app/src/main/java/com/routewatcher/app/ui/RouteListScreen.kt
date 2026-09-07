@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.border
@@ -23,6 +24,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -55,12 +57,23 @@ fun RouteListScreen(
     onCheckNow: (RouteEntity) -> Unit,
     onUpdateActiveDays: (RouteEntity, Int) -> Unit,
     onDeleteRoute: (RouteEntity) -> Unit,
+    pendingExpandRouteId: Long?,
+    onPendingExpandConsumed: () -> Unit,
 ){
 
-    // "locked mode" - while route panel is expanded, app gesture control is disabled (for Google gestures etc)
     var expandedRouteIds by remember { mutableStateOf(setOf<Long>()) }
+    // Routes which minimap is currently mid-interaction (keeps the route list scrollable)
+    var movingMapRouteIds by remember { mutableStateOf(setOf<Long>()) }
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
+
+    // Auto-expands + scrolls to a route with a delay upon checking
+    LaunchedEffect(pendingExpandRouteId) {
+        val routeId = pendingExpandRouteId ?: return@LaunchedEffect
+        expandedRouteIds = expandedRouteIds + routeId
+        scrollToRoute(routes, listState, routeId)
+        onPendingExpandConsumed()
+    }
 
     Scaffold(
         topBar = {
@@ -102,7 +115,7 @@ fun RouteListScreen(
                     .padding(padding)
                     .fillMaxSize(),
                 state = listState,
-                userScrollEnabled = expandedRouteIds.isEmpty(),
+                userScrollEnabled = movingMapRouteIds.isEmpty(),
             ) {
                 items(routes, key = { it.id }) { route ->
                     RouteRow(
@@ -115,8 +128,10 @@ fun RouteListScreen(
                         onUpdateActiveDays = onUpdateActiveDays,
                         onDeleteRoute = {  toDelete ->
                             expandedRouteIds = expandedRouteIds - toDelete.id
+                            movingMapRouteIds = movingMapRouteIds - toDelete.id
                             onDeleteRoute(toDelete)
                         },
+                        expanded = expandedRouteIds.contains(route.id),
                         onExpandedChanged = { isExpanded ->
                             expandedRouteIds = if (isExpanded) {
                                 expandedRouteIds + route.id
@@ -124,12 +139,14 @@ fun RouteListScreen(
                                 expandedRouteIds - route.id
                             }
                             if (isExpanded) {
-                                val index = routes.indexOfFirst { it.id == route.id }
-                                if (index >= 0) {
-                                    coroutineScope.launch {
-                                        listState.animateScrollToItem(index)
-                                    }
-                                }
+                                coroutineScope.launch { scrollToRoute(routes, listState, route.id) }
+                            }
+                        },
+                        onMapMovingChanged = { isMoving ->
+                            movingMapRouteIds = if (isMoving) {
+                                movingMapRouteIds + route.id
+                            } else {
+                                movingMapRouteIds - route.id
                             }
                         },
                     )
@@ -137,6 +154,14 @@ fun RouteListScreen(
                 }
             }
         }
+    }
+}
+
+// Scrolls the list to a routes current position
+private suspend fun scrollToRoute(routes: List<RouteEntity>, listState: LazyListState, routeId: Long) {
+    val index = routes.indexOfFirst { it.id == routeId }
+    if (index >= 0) {
+        listState.animateScrollToItem(index)
     }
 }
 
@@ -164,9 +189,11 @@ private fun RouteRow(
     onToggleRoute: (RouteEntity, Boolean) -> Unit,
     onUpdateActiveDays: (RouteEntity, Int) -> Unit,
     onDeleteRoute: (RouteEntity) -> Unit,
+    expanded: Boolean,
     onExpandedChanged: (Boolean) -> Unit,
+    onMapMovingChanged: (Boolean) -> Unit,
 ) {
-    var expanded by remember(route.id) { mutableStateOf(false) }
+
     var activeDays by remember(route.id) { mutableStateOf(route.activeDays) }
     var confirmingDelete by remember(route.id) { mutableStateOf(false) }
     val context = LocalContext.current
@@ -250,7 +277,6 @@ private fun RouteRow(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
-                            expanded = true
                             onExpandedChanged(true)
                         },
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -285,6 +311,7 @@ private fun RouteRow(
                     modifier = Modifier
                         .fillMaxWidth()
                         .aspectRatio(1f),
+                    onMovingChanged = onMapMovingChanged,
                 )
                 Spacer(Modifier.height(12.dp))
 
@@ -305,7 +332,6 @@ private fun RouteRow(
                             }
                         }
                         IconButton(onClick = {
-                            expanded = false
                             onExpandedChanged(false)
                         }) {
                             Text("\u25B4", style = MaterialTheme.typography.titleMedium)
