@@ -2,6 +2,7 @@ package com.routewatcher.app.data
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import java.net.URLEncoder
 
 // A single commute route (e.g. "home -> work")
 @Entity(tableName = "routes")
@@ -40,6 +41,13 @@ data class RouteEntity(
                 if (lat != null && lng != null) lat to lng else null
             }
             ?: emptyList()
+
+    // Builds a Google Maps "directions" web link from this routes origin/destination
+    fun directionsUrl(): String {
+        val origin = URLEncoder.encode(originAddress, "UTF-8")
+        val destination = URLEncoder.encode(destinationAddress, "UTF-8")
+        return "https://www.google.com/maps/dir/?api=1&origin=$origin&destination=$destination&travelmode=driving"
+    }
 
     companion object {
         // Matches AlarmScheduler.dayBitFor() exactly. Do not change without updating it

@@ -3,10 +3,16 @@ package com.routewatcher.app.alarm
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.app.Notification
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.Manifest
+import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import com.routewatcher.app.MainActivity
 import com.routewatcher.app.data.RouteEntity
 import com.routewatcher.app.network.TrafficResult
@@ -58,8 +64,13 @@ object NotificationHelper {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .setContentIntent(openAppIntent(context))
+            .addAction(
+                android.R.drawable.ic_menu_directions,
+                context.getString(R.string.open_in_maps),
+                openMapsIntent(context, route),
+            )
             .build()
-        NotificationManagerCompat.from(context).notify(route.id.toInt() * 10 + 1, n)
+        notifyIfPermitted(context, route.id.toInt() * 10 + 1, n)
     }
 
     fun showAllClear(context: Context, route: RouteEntity, result: TrafficResult, offsetMinutes: Int) {
@@ -71,7 +82,7 @@ object NotificationHelper {
             .setAutoCancel(true)
             .setContentIntent(openAppIntent(context))
             .build()
-        NotificationManagerCompat.from(context).notify(route.id.toInt() * 10 + 2, n)
+        notifyIfPermitted(context, route.id.toInt() * 10 + 2, n)
     }
 
     fun showCheckFailed(context: Context, route: RouteEntity, errorCode: TrafficErrorCode?) {
@@ -94,7 +105,7 @@ object NotificationHelper {
                 if (errorCode == TrafficErrorCode.NO_API_KEY) openSettingsIntent(context) else openAppIntent(context)
             )
             .build()
-        NotificationManagerCompat.from(context).notify(route.id.toInt() * 10 + 3, n)
+        notifyIfPermitted(context, route.id.toInt() * 10 + 3, n)
     }
 
     // For failures not tied to a specific route (zero routes enabled)
@@ -107,8 +118,19 @@ object NotificationHelper {
             .setAutoCancel(true)
             .setContentIntent(openSettingsIntent(context))
             .build()
-        NotificationManagerCompat.from(context).notify(NOTIFICATION_ID_API_KEY_MISSING, n)
+        notifyIfPermitted(context, NOTIFICATION_ID_API_KEY_MISSING, n)
     }
+    // Android 13+ requires the POST_NOTIFICATIONS runtime permission for every notify() call
+    private fun notifyIfPermitted(context: Context, id: Int, notification: Notification) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        NotificationManagerCompat.from(context).notify(id, notification)
+    }
+
     private fun openAppIntent(context: Context): PendingIntent {
         val intent = Intent(context, MainActivity::class.java)
         return PendingIntent.getActivity(
@@ -128,6 +150,17 @@ object NotificationHelper {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
     }
+    // Google Maps hotkey for the given route
+    private fun openMapsIntent(context: Context, route: RouteEntity): PendingIntent {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(route.directionsUrl()))
+        return PendingIntent.getActivity(
+            context,
+            route.id.toInt() * 10 + REQUEST_CODE_OPEN_MAPS_OFFSET,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+    }
     private const val REQUEST_CODE_OPEN_APP = 0
     private const val REQUEST_CODE_OPEN_SETTINGS = 1
+    private const val REQUEST_CODE_OPEN_MAPS_OFFSET = 4
 }

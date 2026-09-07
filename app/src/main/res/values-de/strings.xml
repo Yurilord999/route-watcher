@@ -96,4 +96,7 @@
     <string name="day_abbrev_friday">Fr</string>
     <string name="day_abbrev_saturday">Sa</string>
     <string name="day_abbrev_sunday">So</string>
+
+    <!-- Google Maps button-->
+    <string name="open_in_maps">In Google Maps öffnen</string>
 </resources>

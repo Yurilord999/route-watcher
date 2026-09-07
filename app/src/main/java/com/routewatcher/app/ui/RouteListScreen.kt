@@ -31,6 +31,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalContext
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import com.routewatcher.app.R
 import com.routewatcher.app.data.RouteEntity
 import com.routewatcher.app.network.TrafficErrorCode
@@ -164,6 +169,7 @@ private fun RouteRow(
     var expanded by remember(route.id) { mutableStateOf(false) }
     var activeDays by remember(route.id) { mutableStateOf(route.activeDays) }
     var confirmingDelete by remember(route.id) { mutableStateOf(false) }
+    val context = LocalContext.current
 
     Column {
         // ---- check-now result banner ----
@@ -288,10 +294,15 @@ private fun RouteRow(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        TextButton(onClick = { confirmingDelete = true }) {
-                            Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error)
-                            Spacer(Modifier.width(4.dp))
-                            Text(stringResource(R.string.delete_route), color = MaterialTheme.colorScheme.error)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            TextButton(onClick = { confirmingDelete = true }) {
+                                Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                                Spacer(Modifier.width(4.dp))
+                                Text(stringResource(R.string.delete_route), color = MaterialTheme.colorScheme.error)
+                            }
+                            TextButton(onClick = { openInGoogleMaps(context, route) }) {
+                                Text(stringResource(R.string.open_in_maps))
+                            }
                         }
                         IconButton(onClick = {
                             expanded = false
@@ -322,6 +333,15 @@ private fun RouteRow(
     }
 }
 
+// Opens Google Maps for directions between this routes origin & destination
+private fun openInGoogleMaps(context: Context, route: RouteEntity) {
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(route.directionsUrl()))
+    try {
+        context.startActivity(intent)
+    } catch (e: ActivityNotFoundException) {
+        // Nothing installed that can open a link at all (no browser either) - nothing to do.
+    }
+}
 // ---- day circle styles: small read only dots + large tappable toggle ----
 
 @Composable
