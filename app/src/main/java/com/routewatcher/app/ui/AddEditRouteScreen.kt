@@ -1,6 +1,8 @@
 package com.routewatcher.app.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -8,6 +10,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.style.TextAlign
 import com.routewatcher.app.R
+import com.routewatcher.app.data.RouteEntity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -22,6 +25,8 @@ fun AddEditRouteScreen(
     onHourChange: (String) -> Unit,
     minute: String,
     onMinuteChange: (String) -> Unit,
+    activeDays: Int,
+    onActiveDaysChange: (Int) -> Unit,
     offsets: String,
     onOffsetsChange: (String) -> Unit,
     threshold: String,
@@ -42,8 +47,10 @@ fun AddEditRouteScreen(
             modifier = Modifier
                 .padding(padding)
                 .padding(16.dp)
-                .fillMaxSize(),
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
         ) {
+            // ---- basic route info: name, origin, destination ----
             OutlinedTextField(
                 value = name,
                 onValueChange = onNameChange,
@@ -68,6 +75,7 @@ fun AddEditRouteScreen(
             )
             Spacer(Modifier.height(24.dp))
 
+            // ---- departure time ----
             Row {
                 OutlinedTextField(
                     value = hour,
@@ -85,6 +93,39 @@ fun AddEditRouteScreen(
             }
             Spacer(Modifier.height(8.dp))
 
+            // ---- active days: toggles + week/weekdays/weekend presets ----
+            Text(stringResource(R.string.route_active_days), style = MaterialTheme.typography.labelLarge)
+            Spacer(Modifier.height(4.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                daysForDisplay().forEach { (label, bit) ->
+                    DayCircle(
+                        label = label,
+                        active = (activeDays and bit) != 0,
+                        onClick = { onActiveDaysChange(activeDays xor bit) },
+                    )
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(
+                    selected = activeDays == RouteEntity.ALL_DAYS,
+                    onClick = { onActiveDaysChange(RouteEntity.ALL_DAYS) },
+                    label = { Text(stringResource(R.string.preset_full_week)) },
+                )
+                FilterChip(
+                    selected = activeDays == RouteEntity.WEEKDAYS,
+                    onClick = { onActiveDaysChange(RouteEntity.WEEKDAYS) },
+                    label = { Text(stringResource(R.string.preset_weekdays)) },
+                )
+                FilterChip(
+                    selected = activeDays == RouteEntity.WEEKEND,
+                    onClick = { onActiveDaysChange(RouteEntity.WEEKEND) },
+                    label = { Text(stringResource(R.string.preset_weekend)) },
+                )
+            }
+            Spacer(Modifier.height(24.dp))
+
+            // ---- check timing & alert threshold ----
             OutlinedTextField(
                 value = offsets,
                 onValueChange = onOffsetsChange,
@@ -101,6 +142,7 @@ fun AddEditRouteScreen(
             )
             Spacer(Modifier.height(24.dp))
 
+            // ---- picked road summary ----
             Text(
                 if (lockedRouteSummary != null) {
                     stringResource(R.string.picked_road_summary, lockedRouteSummary)
@@ -119,6 +161,7 @@ fun AddEditRouteScreen(
                 }
             Spacer(Modifier.height(8.dp))
 
+            // ---- save / cancel / delete ----
             Button(
                 onClick = onSave,
                 modifier = Modifier.fillMaxWidth(),
@@ -149,6 +192,7 @@ fun AddEditRouteScreen(
         }
     }
 
+    // ---- delete confirmation dialog ----
     if (showDeleteConfirm) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },

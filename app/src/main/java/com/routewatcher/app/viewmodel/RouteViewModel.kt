@@ -157,6 +157,7 @@ class RouteViewModel(
     fun updateMinute(value: String) = updateEditState { it.copy(minute = value) }
     fun updateOffsets(value: String) = updateEditState { it.copy(offsets = value) }
     fun updateThreshold(value: String) = updateEditState { it.copy(threshold = value) }
+    fun updateActiveDays(value: Int) = updateEditState { it.copy(activeDays = value) }
 
     fun cancelEdit() {
         _editState.value = null

@@ -89,6 +89,8 @@ fun RouteWatcherApp(
                 onHourChange = { viewModel.updateHour(it) },
                 minute = state.minute,
                 onMinuteChange = { viewModel.updateMinute(it) },
+                activeDays = state.activeDays,
+                onActiveDaysChange = { viewModel.updateActiveDays(it) },
                 offsets = state.offsets,
                 onOffsetsChange = { viewModel.updateOffsets(it) },
                 threshold = state.threshold,

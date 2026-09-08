@@ -58,6 +58,9 @@ data class RouteEntity(
         const val FRIDAY = 16
         const val SATURDAY = 32
         const val SUNDAY = 64
+        const val ALL_DAYS = MONDAY or TUESDAY or WEDNESDAY or THURSDAY or FRIDAY or SATURDAY or SUNDAY
+        const val WEEKDAYS = MONDAY or TUESDAY or WEDNESDAY or THURSDAY or FRIDAY
+        const val WEEKEND = SATURDAY or SUNDAY
 
         fun dayBitFor(calendar: Calendar = Calendar.getInstance()): Int = when (calendar.get(Calendar.DAY_OF_WEEK)) {
             Calendar.MONDAY -> MONDAY

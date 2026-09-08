@@ -168,7 +168,7 @@ private suspend fun scrollToRoute(routes: List<RouteEntity>, listState: LazyList
 // ---- day of week display order ----
 // Bit values must match RouteEntity constants (shared with AlarmScheduler.dayBitFor)
 @Composable
-private fun daysForDisplay(): List<Pair<String, Int>> = listOf(
+internal fun daysForDisplay(): List<Pair<String, Int>> = listOf(
     stringResource(R.string.day_abbrev_monday) to RouteEntity.MONDAY,
     stringResource(R.string.day_abbrev_tuesday) to RouteEntity.TUESDAY,
     stringResource(R.string.day_abbrev_wednesday) to RouteEntity.WEDNESDAY,
@@ -388,7 +388,7 @@ private fun DayDot(label: String, active: Boolean) {
 }
 
 @Composable
-private fun DayCircle(label: String, active: Boolean, onClick: () -> Unit) {
+internal fun DayCircle(label: String, active: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .size(36.dp)
