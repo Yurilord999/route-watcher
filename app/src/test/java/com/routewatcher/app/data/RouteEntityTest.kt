@@ -1,6 +1,8 @@
 package com.routewatcher.app.data
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.Calendar
 
 
 class RouteEntityTest {
@@ -38,5 +40,23 @@ class RouteEntityTest {
                     "&destination=Frauenkirche+Dresden%2C+Dresden&travelmode=driving",
             route.directionsUrl(),
         )
+    }
+
+    @Test
+    fun dayBitFor_mapsCalendarDayToCorrectBit() {
+        val wednesday = Calendar.getInstance().apply { set(Calendar.DAY_OF_WEEK, Calendar.WEDNESDAY) }
+        assertEquals(RouteEntity.WEDNESDAY, RouteEntity.dayBitFor(wednesday))
+    }
+
+    @Test
+    fun defaultActiveDays_isExactlyOneDayBit() {
+        val allDayBits = setOf(
+            RouteEntity.MONDAY, RouteEntity.TUESDAY, RouteEntity.WEDNESDAY, RouteEntity.THURSDAY,
+            RouteEntity.FRIDAY, RouteEntity.SATURDAY, RouteEntity.SUNDAY,
+        )
+        val defaultRoute = RouteEntity(name = "Test", originAddress = "A", destinationAddress = "B")
+        // Can't assert which day without the test flaking depending on when it runs -
+        // just that it's today-only (a single valid day bit), not a multi-day preset.
+        assertTrue(defaultRoute.activeDays in allDayBits)
     }
 }

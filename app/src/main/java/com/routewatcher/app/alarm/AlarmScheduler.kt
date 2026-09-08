@@ -76,22 +76,12 @@ object AlarmScheduler {
                 set(Calendar.MILLISECOND, 0)
                 add(Calendar.MINUTE, -offsetMinutes)
             }
-            val dayBit = dayBitFor(candidate)
+            val dayBit = RouteEntity.dayBitFor(candidate)
             if ((route.activeDays and dayBit) != 0 && candidate.timeInMillis > now) {
                 return candidate.timeInMillis
             }
         }
         return now + 7L * 24 * 60 * 60 * 1000
-    }
-
-    private fun dayBitFor(cal: Calendar): Int = when (cal.get(Calendar.DAY_OF_WEEK)) {
-        Calendar.MONDAY -> 1
-        Calendar.TUESDAY -> 2
-        Calendar.WEDNESDAY -> 4
-        Calendar.THURSDAY -> 8
-        Calendar.FRIDAY -> 16
-        Calendar.SATURDAY -> 32
-        else -> 64
     }
 
     private fun requestCode(routeId: Long, slot: Int): Int = (routeId * 100 + slot).toInt()

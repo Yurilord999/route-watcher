@@ -13,7 +13,7 @@ data class RouteEditState(
     val minute: String = "0",
     val offsets: String = "30",
     val threshold: String = "10",
-    val activeDays: Int = 0b1111100,
+    val activeDays: Int = RouteEntity.dayBitFor(),
     val enabled: Boolean = false,
     val isCustomRoute: Boolean = false,
     val lockedRoutePolyline: String? = null,

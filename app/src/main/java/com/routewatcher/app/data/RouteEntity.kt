@@ -3,6 +3,7 @@ package com.routewatcher.app.data
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import java.net.URLEncoder
+import java.util.Calendar
 
 // A single commute route (e.g. "home -> work")
 @Entity(tableName = "routes")
@@ -15,7 +16,7 @@ data class RouteEntity(
     val departureMinute: Int = 0,
     val checkOffsetsMinutes: String = "30",
     val delayThresholdMinutes: Int = 10,
-    val activeDays: Int = 0b1111100,
+    val activeDays: Int = dayBitFor(),
 
     // Only true when waypoints are set in custom route mode
     val enabled: Boolean = false,
@@ -50,7 +51,6 @@ data class RouteEntity(
     }
 
     companion object {
-        // Matches AlarmScheduler.dayBitFor() exactly. Do not change without updating it
         const val MONDAY = 1
         const val TUESDAY = 2
         const val WEDNESDAY = 4
@@ -58,5 +58,15 @@ data class RouteEntity(
         const val FRIDAY = 16
         const val SATURDAY = 32
         const val SUNDAY = 64
+
+        fun dayBitFor(calendar: Calendar = Calendar.getInstance()): Int = when (calendar.get(Calendar.DAY_OF_WEEK)) {
+            Calendar.MONDAY -> MONDAY
+            Calendar.TUESDAY -> TUESDAY
+            Calendar.WEDNESDAY -> WEDNESDAY
+            Calendar.THURSDAY -> THURSDAY
+            Calendar.FRIDAY -> FRIDAY
+            Calendar.SATURDAY -> SATURDAY
+            else -> SUNDAY
+        }
     }
 }
