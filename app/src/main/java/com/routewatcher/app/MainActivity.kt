@@ -18,6 +18,7 @@ import com.routewatcher.app.data.SettingsStore
 import com.routewatcher.app.ui.theme.RouteWatcherTheme
 import com.routewatcher.app.ui.RouteWatcherApp
 import com.routewatcher.app.alarm.NotificationHelper
+import com.google.android.libraries.places.api.Places
 
 class MainActivity : ComponentActivity() {
 
@@ -29,6 +30,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         NotificationHelper.ensureChannels(this)
         requestNotificationPermissionIfNeeded()
+        initPlacesSdkIfNeeded()
 
         // Database instance for whole activity lifetime
         val dao = AppDatabase.get(this).routeDao()
@@ -62,6 +64,14 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    // Places SDK for the address autocomplete
+    private fun initPlacesSdkIfNeeded() {
+        if (BuildConfig.MAPS_API_KEY.isNotBlank() && !Places.isInitialized()) {
+            Places.initializeWithNewPlacesApiEnabled(applicationContext, BuildConfig.MAPS_API_KEY)
+        }
+    }
+
     // On Android 13+, showing notifications requires an explicit runtime grant too
     private fun requestNotificationPermissionIfNeeded() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

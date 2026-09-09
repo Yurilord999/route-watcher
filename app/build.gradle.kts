@@ -6,9 +6,10 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
-// Maps SDK needs its key at build time (unlike the Routes API, entered at runtime in Settings)
-// Map rendering is free, should be fine for now
-// TODO: look into better Maps SDK key handling
+// Maps SDK + Places SDK (New) share this key, entered at build time
+// Restricted to this apps package + signing cert (android application restriction)
+// in consol cloud google. Safe to ship baked in.
+
 val localProperties = Properties().apply {
     val file = rootProject.file("local.properties")
     if (file.exists()) load(file.inputStream())
@@ -30,6 +31,10 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
+
+        // Same key as above, also reachable from Kotlin
+        // Places SDK needs it as a real string at init time, not just a manifest placeholder
+        buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
     }
 
     buildTypes {
@@ -45,6 +50,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -72,6 +78,7 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.google.android.gms:play-services-maps:18.2.0")
     implementation("com.google.maps.android:maps-compose:4.3.3")
+    implementation("com.google.android.libraries.places:places:5.1.1")
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     ksp("androidx.room:room-compiler:2.8.0")
 }
