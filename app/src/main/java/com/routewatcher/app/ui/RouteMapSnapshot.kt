@@ -124,7 +124,7 @@ fun RouteMapSnapshot(route: RouteEntity, modifier: Modifier = Modifier, onMoving
 }
 
 @Composable
-private fun TrafficToggleButton(enabled: Boolean, onToggle: () -> Unit, modifier: Modifier = Modifier) {
+internal fun TrafficToggleButton(enabled: Boolean, onToggle: () -> Unit, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .size(36.dp)

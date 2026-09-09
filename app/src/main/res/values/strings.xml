@@ -17,8 +17,8 @@
 
     <!-- Add/edit route -->
     <string name="route_name">Route name</string>
-    <string name="origin_address">Origin address</string>
-    <string name="destination_address">Destination address</string>
+    <string name="origin_address">Origin</string>
+    <string name="destination_address">Destination</string>
     <string name="departure_hour">Hour (0-23)</string>
     <string name="departure_minute">Minute</string>
     <string name="route_active_days">Active days</string>

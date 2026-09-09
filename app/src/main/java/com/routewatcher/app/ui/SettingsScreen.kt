@@ -19,6 +19,7 @@ fun SettingsScreen(
     onTestKey: () -> Unit,
     testResult: ApiKeyTestResult?,
     onBack: () -> Unit,
+    onPreviewRouteForm: () -> Unit,
 ) {
     var keyInput by remember { mutableStateOf(currentKey ?: "") }
 
@@ -76,6 +77,15 @@ fun SettingsScreen(
                 Text(message, style = MaterialTheme.typography.bodyMedium)
             }
             Spacer(Modifier.height(24.dp))
+
+            //Temporary! (new add/edit route form testing)
+            OutlinedButton(
+                onClick = onPreviewRouteForm,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("UI test")
+            }
+            Spacer(Modifier.height(8.dp))
 
             // ---- navigation ----
             OutlinedButton(

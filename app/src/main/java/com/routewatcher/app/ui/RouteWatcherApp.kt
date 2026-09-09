@@ -21,6 +21,8 @@ private sealed class Screen {
     data object Settings : Screen()
     data object PickRoad : Screen()
     data object Onboarding : Screen()
+    //Temporary! (new add/edit route form testing)
+    data object RouteForm : Screen()
 }
 
 // Top level screen router
@@ -55,6 +57,10 @@ fun RouteWatcherApp(
     LaunchedEffect(Unit) {
         viewModel.autoExpandRouteId.collect { routeId -> pendingExpandRouteId = routeId }
     }
+
+    //Temporary! (new add/edit route form testing)
+    var routeFormOrigin by remember { mutableStateOf("") }
+    var routeFormDestination by remember { mutableStateOf("") }
 
     when (screen) {
         is Screen.List -> RouteListScreen(
@@ -122,7 +128,24 @@ fun RouteWatcherApp(
             onTestKey = { viewModel.testApiKey() },
             testResult = testResult,
             onBack = { screen = Screen.List },
+            onPreviewRouteForm = { screen = Screen.RouteForm },
         )
+
+        //Temporary! (new add/edit route form testing)
+        is Screen.RouteForm -> RouteFormScreen(
+            origin = routeFormOrigin,
+            onOriginChange = { routeFormOrigin = it },
+            destination = routeFormDestination,
+            onDestinationChange = { routeFormDestination = it },
+            onSwap = {
+                val tmp = routeFormOrigin
+                routeFormOrigin = routeFormDestination
+                routeFormDestination = tmp
+            },
+            onMoreOptions = {},
+            onCancel = { screen = Screen.Settings },
+        )
+
         is Screen.Onboarding -> OnboardingScreen(
             onSaveKey = { key -> viewModel.saveApiKey(key) },
             onFinished = {

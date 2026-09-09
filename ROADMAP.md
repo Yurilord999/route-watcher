@@ -26,7 +26,7 @@ automatic traffic checks, manual check via widget, notifications.
     (Deep-link to auto-expanded, congested route)
 
 ## Next up
-Add/Edit form UI for origin & destination overhaul
+Add/Edit form UI overhaul
 
 ## Known limitations / redesign considerations
 - Polyline has no native drag support. Editing route through dragging is out of scope for now. 
