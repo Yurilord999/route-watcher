@@ -61,6 +61,12 @@ fun RouteWatcherApp(
     //Temporary! (new add/edit route form testing)
     var routeFormOrigin by remember { mutableStateOf("") }
     var routeFormDestination by remember { mutableStateOf("") }
+    val routeFormPredictions = remember {
+        listOf(
+            AddressPrediction("Dresden Hauptbahnhof", "Dresden, Germany"),
+            AddressPrediction("Frauenkirche Dresden", "Dresden, Germany"),
+        )
+    }
 
     when (screen) {
         is Screen.List -> RouteListScreen(
@@ -137,6 +143,9 @@ fun RouteWatcherApp(
             onOriginChange = { routeFormOrigin = it },
             destination = routeFormDestination,
             onDestinationChange = { routeFormDestination = it },
+            predictions = routeFormPredictions,
+            onOriginPredictionSelected = { routeFormOrigin = it.primaryText },
+            onDestinationPredictionSelected = { routeFormDestination = it.primaryText },
             onSwap = {
                 val tmp = routeFormOrigin
                 routeFormOrigin = routeFormDestination

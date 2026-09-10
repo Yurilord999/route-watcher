@@ -8,9 +8,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -27,6 +30,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalFocusManager
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -37,6 +42,12 @@ import com.routewatcher.app.R
 
 private val DRESDEN_HAUPTBAHNHOF = LatLng(51.0405, 13.7325)
 
+// Autocomplete suggestion row (placeholder shape for now)
+data class AddressPrediction(
+    val primaryText: String,
+    val secondaryText: String,
+)
+
 // ---- fullscreen add/edit route form: search fields + map ----
 @Composable
 fun RouteFormScreen(
@@ -44,11 +55,17 @@ fun RouteFormScreen(
     onOriginChange: (String) -> Unit,
     destination: String,
     onDestinationChange: (String) -> Unit,
+    predictions: List<AddressPrediction>,
+    onOriginPredictionSelected: (AddressPrediction) -> Unit,
+    onDestinationPredictionSelected: (AddressPrediction) -> Unit,
     onSwap: () -> Unit,
     onMoreOptions: () -> Unit,
     onCancel: () -> Unit,
 ) {
-    var trafficEnabled by remember { mutableStateOf(true) }
+    var originFocused by remember { mutableStateOf(false) }
+    var destinationFocused by remember { mutableStateOf(false) }
+    var trafficEnabled by remember { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
 
     Box(Modifier.fillMaxSize()) {
         // ---- map (background, edge-to-edge) ----
@@ -64,6 +81,8 @@ fun RouteFormScreen(
                 myLocationButtonEnabled = true,
                 compassEnabled = true,
             ),
+            contentPadding = PaddingValues(bottom = 48.dp),
+            onMapClick = { focusManager.clearFocus() },
         )
 
         // ---- traffic toggle (reused from the minimap) ----
@@ -72,7 +91,7 @@ fun RouteFormScreen(
             onToggle = { trafficEnabled = !trafficEnabled },
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(top = 128.dp, end = 8.dp),
+                .padding(top = 200.dp, end = 8.dp),
         )
 
         // ---- back / cancel ----
@@ -110,7 +129,9 @@ fun RouteFormScreen(
                         unfocusedBorderColor = Color.Transparent,
                         focusedBorderColor = Color.Transparent,
                     ),
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .onFocusChanged { originFocused = it.isFocused },
                 )
                 Text(
                     "\u22EE",
@@ -134,7 +155,9 @@ fun RouteFormScreen(
                         unfocusedBorderColor = Color.Transparent,
                         focusedBorderColor = Color.Transparent,
                     ),
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .onFocusChanged { destinationFocused = it.isFocused },
                 )
                 Text(
                     "\u21C5",
@@ -142,6 +165,39 @@ fun RouteFormScreen(
                     modifier = Modifier
                         .clickable(onClick = onSwap)
                         .padding(8.dp),
+                )
+            }
+
+            if (originFocused && predictions.isNotEmpty()) {
+                PredictionsList(predictions, onClick = {
+                    onOriginPredictionSelected(it)
+                    focusManager.clearFocus()
+                })
+            } else if (destinationFocused && predictions.isNotEmpty()) {
+                PredictionsList(predictions, onClick = {
+                    onDestinationPredictionSelected(it)
+                    focusManager.clearFocus()
+                })
+            }
+        }
+    }
+}
+
+@Composable
+private fun PredictionsList(predictions: List<AddressPrediction>, onClick: (AddressPrediction) -> Unit) {
+    LazyColumn {
+        items(predictions) { prediction ->
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onClick(prediction) }
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+            ) {
+                Text(prediction.primaryText, style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    prediction.secondaryText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
