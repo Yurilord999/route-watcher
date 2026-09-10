@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
@@ -20,6 +21,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.BottomSheetScaffold
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SheetValue
+import androidx.compose.material3.rememberBottomSheetScaffoldState
+import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -61,6 +67,8 @@ data class FakeRouteAlternative(
 )
 
 // ---- fullscreen add/edit route form: search fields + map ----
+// Bare state: just the map. Full state: includes draggable bottom sheet.
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RouteFormScreen(
     origin: String,
@@ -77,6 +85,65 @@ fun RouteFormScreen(
     onAlternativeSelected: (Int) -> Unit,
     onCancel: () -> Unit,
 ) {
+    val mapArea = @Composable {
+        RouteFormMapArea(
+            origin = origin,
+            onOriginChange = onOriginChange,
+            destination = destination,
+            onDestinationChange = onDestinationChange,
+            predictions = predictions,
+            onOriginPredictionSelected = onOriginPredictionSelected,
+            onDestinationPredictionSelected = onDestinationPredictionSelected,
+            onSwap = onSwap,
+            onMoreOptions = onMoreOptions,
+            alternatives = alternatives,
+            selectedAlternative = selectedAlternative,
+            onAlternativeSelected = onAlternativeSelected,
+            onCancel = onCancel,
+        )
+    }
+
+    if (alternatives.isEmpty()) {
+        mapArea()
+    } else {
+        val sheetState = rememberStandardBottomSheetState(initialValue = SheetValue.PartiallyExpanded)
+        val scaffoldState = rememberBottomSheetScaffoldState(bottomSheetState = sheetState)
+        BottomSheetScaffold(
+            scaffoldState = scaffoldState,
+            sheetPeekHeight = 120.dp,
+            sheetContent = {
+                // TODO: Route summary, stops and the rest of the form goes here
+                Box(
+                    modifier = Modifier.fillMaxWidth().height(120.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("Sheet content coming soon")
+                }
+            },
+        ) {
+            mapArea()
+        }
+    }
+}
+
+// Map, address fields and everything floating on top is shared by bare & full state
+@Composable
+private fun RouteFormMapArea(
+    origin: String,
+    onOriginChange: (String) -> Unit,
+    destination: String,
+    onDestinationChange: (String) -> Unit,
+    predictions: List<AddressPrediction>,
+    onOriginPredictionSelected: (AddressPrediction) -> Unit,
+    onDestinationPredictionSelected: (AddressPrediction) -> Unit,
+    onSwap: () -> Unit,
+    onMoreOptions: () -> Unit,
+    alternatives: List<FakeRouteAlternative>,
+    selectedAlternative: Int?,
+    onAlternativeSelected: (Int) -> Unit,
+    onCancel: () -> Unit,
+) {
+
     var originFocused by remember { mutableStateOf(false) }
     var destinationFocused by remember { mutableStateOf(false) }
     var trafficEnabled by remember { mutableStateOf(false) }
