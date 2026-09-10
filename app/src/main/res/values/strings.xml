@@ -31,6 +31,7 @@
     <string name="no_road_picked">No specific road picked yet</string>
     <string name="change_picked_road">Change picked road</string>
     <string name="pick_road_on_map">Pick road on map</string>
+    <string name="route_form_bubble_minutes">%1$d min</string>
 
     <!-- Road picker -->
     <string name="picker_title">Pick your road</string>

@@ -31,6 +31,7 @@
     <string name="no_road_picked">Noch keine bestimmte Straße gewählt</string>
     <string name="change_picked_road">Gewählte Straße ändern</string>
     <string name="pick_road_on_map">Straße auf der Karte auswählen</string>
+    <string name="route_form_bubble_minutes">%1$d Min.</string>
 
     <!-- Road picker -->
     <string name="picker_title">Straße auswählen</string>

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
@@ -30,6 +31,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import com.google.android.gms.maps.model.CameraPosition
@@ -38,7 +40,10 @@ import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.Polyline
+import com.google.maps.android.compose.CameraPositionState
 import com.routewatcher.app.R
+import com.routewatcher.app.network.RouteOption
 
 private val DRESDEN_HAUPTBAHNHOF = LatLng(51.0405, 13.7325)
 
@@ -46,6 +51,13 @@ private val DRESDEN_HAUPTBAHNHOF = LatLng(51.0405, 13.7325)
 data class AddressPrediction(
     val primaryText: String,
     val secondaryText: String,
+)
+
+// Route alternative shown on the map
+// TODO: fake data for now, no real API call yet
+data class FakeRouteAlternative(
+    val option: RouteOption,
+    val points: List<LatLng>,
 )
 
 // ---- fullscreen add/edit route form: search fields + map ----
@@ -60,6 +72,9 @@ fun RouteFormScreen(
     onDestinationPredictionSelected: (AddressPrediction) -> Unit,
     onSwap: () -> Unit,
     onMoreOptions: () -> Unit,
+    alternatives: List<FakeRouteAlternative>,
+    selectedAlternative: Int?,
+    onAlternativeSelected: (Int) -> Unit,
     onCancel: () -> Unit,
 ) {
     var originFocused by remember { mutableStateOf(false) }
@@ -83,7 +98,34 @@ fun RouteFormScreen(
             ),
             contentPadding = PaddingValues(bottom = 48.dp),
             onMapClick = { focusManager.clearFocus() },
-        )
+        ) {
+            alternatives.forEachIndexed { index, alt ->
+                Polyline(
+                    points = alt.points,
+                    color = if (index == selectedAlternative) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        Color(0xFFB0BEC5)
+                    },
+                    width = if (index == selectedAlternative) 14f else 8f,
+                    clickable = true,
+                    onClick = { onAlternativeSelected(index) },
+                )
+            }
+        }
+
+        // ---- route duration bubble ----
+        alternatives.forEachIndexed { index, alt ->
+            val anchor = alt.points[alt.points.size / 2]
+            RouteTimeBubble(
+                text = stringResource(R.string.route_form_bubble_minutes, alt.option.durationMinutes),
+                selected = index == selectedAlternative,
+                modifier = Modifier
+                    .offset { latLngToScreenOffset(cameraPositionState, anchor) }
+                    .offset(x = (-18).dp, y = (-32).dp)
+                    .clickable { onAlternativeSelected(index) },
+            )
+        }
 
         // ---- traffic toggle (reused from the minimap) ----
         TrafficToggleButton(
@@ -180,6 +222,35 @@ fun RouteFormScreen(
                 })
             }
         }
+    }
+}
+
+// Converts a map coordinate into its current on-screen pixel position
+// Duration bubbles will remain attached to the route this way
+private fun latLngToScreenOffset(cameraPositionState: CameraPositionState, latLng: LatLng): IntOffset {
+    cameraPositionState.position
+    return cameraPositionState.projection
+        ?.toScreenLocation(latLng)
+        ?.let { IntOffset(it.x, it.y) }
+        ?: IntOffset.Zero
+}
+
+// displays route durations
+@Composable
+private fun RouteTimeBubble(text: String, selected: Boolean, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .background(
+                if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+                RoundedCornerShape(8.dp),
+            )
+            .padding(horizontal = 10.dp, vertical = 4.dp),
+    ) {
+        Text(
+            text,
+            style = MaterialTheme.typography.labelMedium,
+            color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+        )
     }
 }
 

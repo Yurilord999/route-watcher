@@ -13,6 +13,8 @@ import com.routewatcher.app.data.RouteDao
 import com.routewatcher.app.data.SettingsStore
 import com.routewatcher.app.viewmodel.RouteViewModel
 import com.routewatcher.app.viewmodel.RouteViewModelFactory
+import com.routewatcher.app.network.RouteOption
+import com.google.android.gms.maps.model.LatLng
 
 // Screen the app is currently showing
 private sealed class Screen {
@@ -65,6 +67,30 @@ fun RouteWatcherApp(
         listOf(
             AddressPrediction("Dresden Hauptbahnhof", "Dresden, Germany"),
             AddressPrediction("Frauenkirche Dresden", "Dresden, Germany"),
+        )
+    }
+    var routeFormSelectedAlt by remember { mutableStateOf<Int?>(null) }
+    //Temporary! for testing
+    val routeFormAlternatives = remember {
+        listOf(
+            FakeRouteAlternative(
+                RouteOption("Route A", "5.4 km", 14, "", emptyList()),
+                listOf(LatLng(51.0405, 13.7325), LatLng(51.0455, 13.7380), LatLng(51.0509, 13.7442)),
+            ),
+            FakeRouteAlternative(
+                RouteOption("Route B", "6.1 km", 17, "", emptyList()),
+                listOf(
+                    LatLng(51.0405, 13.7325), LatLng(51.0430, 13.7300),
+                    LatLng(51.0480, 13.7350), LatLng(51.0509, 13.7442),
+                ),
+            ),
+            FakeRouteAlternative(
+                RouteOption("Route C", "5.9 km", 16, "", emptyList()),
+                listOf(
+                    LatLng(51.0405, 13.7325), LatLng(51.0420, 13.7420),
+                    LatLng(51.0470, 13.7460), LatLng(51.0509, 13.7442),
+                ),
+            ),
         )
     }
 
@@ -152,6 +178,13 @@ fun RouteWatcherApp(
                 routeFormDestination = tmp
             },
             onMoreOptions = {},
+            alternatives = if (routeFormOrigin.isNotBlank() && routeFormDestination.isNotBlank()) {
+                routeFormAlternatives
+            } else {
+                emptyList()
+            },
+            selectedAlternative = routeFormSelectedAlt,
+            onAlternativeSelected = { routeFormSelectedAlt = it },
             onCancel = { screen = Screen.Settings },
         )
 
