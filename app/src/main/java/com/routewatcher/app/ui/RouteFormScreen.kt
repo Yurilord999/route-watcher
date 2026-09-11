@@ -12,6 +12,11 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
@@ -26,6 +31,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,10 +46,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.style.TextAlign
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -50,6 +62,7 @@ import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.CameraPositionState
 import com.routewatcher.app.R
 import com.routewatcher.app.network.RouteOption
+import com.routewatcher.app.data.RouteEntity
 
 private val DRESDEN_HAUPTBAHNHOF = LatLng(51.0405, 13.7325)
 
@@ -83,6 +96,23 @@ fun RouteFormScreen(
     alternatives: List<FakeRouteAlternative>,
     selectedAlternative: Int?,
     onAlternativeSelected: (Int) -> Unit,
+    name: String,
+    onNameChange: (String) -> Unit,
+    hour: String,
+    onHourChange: (String) -> Unit,
+    minute: String,
+    onMinuteChange: (String) -> Unit,
+    activeDays: Int,
+    onActiveDaysChange: (Int) -> Unit,
+    offsets: String,
+    onOffsetsChange: (String) -> Unit,
+    threshold: String,
+    onThresholdChange: (String) -> Unit,
+    stopsCount: Int,
+    onAddStops: () -> Unit,
+    isNewRoute: Boolean,
+    onSave: () -> Unit,
+    onDelete: () -> Unit,
     onCancel: () -> Unit,
 ) {
     val mapArea = @Composable {
@@ -112,17 +142,224 @@ fun RouteFormScreen(
             scaffoldState = scaffoldState,
             sheetPeekHeight = 120.dp,
             sheetContent = {
-                // TODO: Route summary, stops and the rest of the form goes here
-                Box(
-                    modifier = Modifier.fillMaxWidth().height(120.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text("Sheet content coming soon")
-                }
+                val selected = selectedAlternative?.let { alternatives.getOrNull(it) }
+                RouteFormSheetContent(
+                    routeSummary = selected?.let {
+                        stringResource(R.string.route_form_summary, it.option.durationMinutes, it.option.distanceText)
+                    },
+                    stopsCount = stopsCount,
+                    onAddStops = onAddStops,
+                    name = name,
+                    onNameChange = onNameChange,
+                    hour = hour,
+                    onHourChange = onHourChange,
+                    minute = minute,
+                    onMinuteChange = onMinuteChange,
+                    activeDays = activeDays,
+                    onActiveDaysChange = onActiveDaysChange,
+                    offsets = offsets,
+                    onOffsetsChange = onOffsetsChange,
+                    threshold = threshold,
+                    onThresholdChange = onThresholdChange,
+                    isNewRoute = isNewRoute,
+                    onSave = onSave,
+                    onDelete = onDelete,
+                    onCancel = onCancel,
+                )
             },
         ) {
             mapArea()
         }
+    }
+}
+
+// All add/edit form settings (full state)
+@Composable
+private fun RouteFormSheetContent(
+    routeSummary: String?,
+    stopsCount: Int,
+    onAddStops: () -> Unit,
+    name: String,
+    onNameChange: (String) -> Unit,
+    hour: String,
+    onHourChange: (String) -> Unit,
+    minute: String,
+    onMinuteChange: (String) -> Unit,
+    activeDays: Int,
+    onActiveDaysChange: (Int) -> Unit,
+    offsets: String,
+    onOffsetsChange: (String) -> Unit,
+    threshold: String,
+    onThresholdChange: (String) -> Unit,
+    isNewRoute: Boolean,
+    onSave: () -> Unit,
+    onDelete: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
+    ) {
+        // ---- route summary + stops, side by side to stay compact ----
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(routeSummary ?: "", style = MaterialTheme.typography.titleMedium)
+            OutlinedButton(onClick = onAddStops) {
+                Text(
+                    if (stopsCount > 0) {
+                        pluralStringResource(R.plurals.route_form_stops_count, stopsCount, stopsCount)
+                    } else {
+                        stringResource(R.string.route_form_add_stops)
+                    },
+                )
+            }
+        }
+        Spacer(Modifier.height(24.dp))
+
+        // ---- route name ----
+        OutlinedTextField(
+            value = name,
+            onValueChange = onNameChange,
+            label = { Text(stringResource(R.string.route_name)) },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Spacer(Modifier.height(24.dp))
+
+        // ---- departure time ----
+        Row {
+            OutlinedTextField(
+                value = hour,
+                onValueChange = { onHourChange(it.filter { c -> c.isDigit() }) },
+                label = { Text(stringResource(R.string.departure_hour)) },
+                modifier = Modifier.weight(1f),
+            )
+            Spacer(Modifier.width(8.dp))
+            OutlinedTextField(
+                value = minute,
+                onValueChange = { onMinuteChange(it.filter { c -> c.isDigit() }) },
+                label = { Text(stringResource(R.string.departure_minute)) },
+                modifier = Modifier.weight(1f),
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+
+        // ---- active days: toggles + week/weekdays/weekend presets ----
+        Text(stringResource(R.string.route_active_days), style = MaterialTheme.typography.labelLarge)
+        Spacer(Modifier.height(4.dp))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            daysForDisplay().forEach { (label, bit) ->
+                DayCircle(
+                    label = label,
+                    active = (activeDays and bit) != 0,
+                    onClick = { onActiveDaysChange(activeDays xor bit) },
+                )
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(
+                selected = activeDays == RouteEntity.ALL_DAYS,
+                onClick = { onActiveDaysChange(RouteEntity.ALL_DAYS) },
+                label = { Text(stringResource(R.string.preset_full_week)) },
+            )
+            FilterChip(
+                selected = activeDays == RouteEntity.WEEKDAYS,
+                onClick = { onActiveDaysChange(RouteEntity.WEEKDAYS) },
+                label = { Text(stringResource(R.string.preset_weekdays)) },
+            )
+            FilterChip(
+                selected = activeDays == RouteEntity.WEEKEND,
+                onClick = { onActiveDaysChange(RouteEntity.WEEKEND) },
+                label = { Text(stringResource(R.string.preset_weekend)) },
+            )
+        }
+        Spacer(Modifier.height(24.dp))
+
+        // ---- check timing & alert threshold ----
+        OutlinedTextField(
+            value = offsets,
+            onValueChange = onOffsetsChange,
+            label = { Text(stringResource(R.string.check_offsets)) },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Spacer(Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = threshold,
+            onValueChange = { onThresholdChange(it.filter { c -> c.isDigit() }) },
+            label = { Text(stringResource(R.string.delay_threshold)) },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Spacer(Modifier.height(24.dp))
+
+        // ---- save / cancel / delete ----
+        Button(
+            onClick = onSave,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(stringResource(R.string.save_route))
+        }
+        Spacer(Modifier.height(8.dp))
+
+        OutlinedButton(
+            onClick = onCancel,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(stringResource(R.string.cancel))
+        }
+
+        if (!isNewRoute) {
+            Spacer(Modifier.height(8.dp))
+            TextButton(
+                onClick = { showDeleteConfirm = true },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    stringResource(R.string.delete_route),
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+        }
+    }
+
+    // ---- delete confirmation dialog ----
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = {
+                Text(
+                    stringResource(R.string.delete_route_confirm_title),
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                )
+            },
+            confirmButton = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    TextButton(onClick = { showDeleteConfirm = false }) {
+                        Text(stringResource(R.string.cancel))
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    TextButton(
+                        onClick = {
+                            showDeleteConfirm = false
+                            onDelete()
+                        },
+                    ) {
+                        Text(stringResource(R.string.delete_route), color = MaterialTheme.colorScheme.error)
+                    }
+                }
+            },
+        )
     }
 }
 

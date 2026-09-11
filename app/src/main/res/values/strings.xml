@@ -32,6 +32,12 @@
     <string name="change_picked_road">Change picked road</string>
     <string name="pick_road_on_map">Pick road on map</string>
     <string name="route_form_bubble_minutes">%1$d min</string>
+    <string name="route_form_add_stops">Add stops</string>
+    <string name="route_form_summary">%1$d min (%2$s)</string>
+    <plurals name="route_form_stops_count">
+        <item quantity="one">%1$d stop</item>
+        <item quantity="other">%1$d stops</item>
+    </plurals>
 
     <!-- Road picker -->
     <string name="picker_title">Pick your road</string>

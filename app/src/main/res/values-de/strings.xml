@@ -32,6 +32,12 @@
     <string name="change_picked_road">Gewählte Straße ändern</string>
     <string name="pick_road_on_map">Straße auf der Karte auswählen</string>
     <string name="route_form_bubble_minutes">%1$d Min.</string>
+    <string name="route_form_add_stops">Zwischenstopps</string>
+    <string name="route_form_summary">%1$d Min. (%2$s)</string>
+    <plurals name="route_form_stops_count">
+        <item quantity="one">%1$d Zwischenstopp</item>
+        <item quantity="other">%1$d Zwischenstopps</item>
+    </plurals>
 
     <!-- Road picker -->
     <string name="picker_title">Straße auswählen</string>

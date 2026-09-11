@@ -11,6 +11,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.routewatcher.app.data.RouteDao
 import com.routewatcher.app.data.SettingsStore
+import com.routewatcher.app.data.RouteEntity
 import com.routewatcher.app.viewmodel.RouteViewModel
 import com.routewatcher.app.viewmodel.RouteViewModelFactory
 import com.routewatcher.app.network.RouteOption
@@ -93,6 +94,15 @@ fun RouteWatcherApp(
             ),
         )
     }
+
+    //Temporary! New add/edit form testing
+    var routeFormName by remember { mutableStateOf("") }
+    var routeFormHour by remember { mutableStateOf("8") }
+    var routeFormMinute by remember { mutableStateOf("0") }
+    var routeFormActiveDays by remember { mutableStateOf(RouteEntity.dayBitFor()) }
+    var routeFormOffsets by remember { mutableStateOf("30") }
+    var routeFormThreshold by remember { mutableStateOf("10") }
+    var routeFormStopsCount by remember { mutableStateOf(0) }
 
     when (screen) {
         is Screen.List -> RouteListScreen(
@@ -185,6 +195,23 @@ fun RouteWatcherApp(
             },
             selectedAlternative = routeFormSelectedAlt,
             onAlternativeSelected = { routeFormSelectedAlt = it },
+            name = routeFormName,
+            onNameChange = { routeFormName = it },
+            hour = routeFormHour,
+            onHourChange = { routeFormHour = it },
+            minute = routeFormMinute,
+            onMinuteChange = { routeFormMinute = it },
+            activeDays = routeFormActiveDays,
+            onActiveDaysChange = { routeFormActiveDays = it },
+            offsets = routeFormOffsets,
+            onOffsetsChange = { routeFormOffsets = it },
+            threshold = routeFormThreshold,
+            onThresholdChange = { routeFormThreshold = it },
+            stopsCount = routeFormStopsCount,
+            onAddStops = {},
+            isNewRoute = true,
+            onSave = {},
+            onDelete = {},
             onCancel = { screen = Screen.Settings },
         )
 
