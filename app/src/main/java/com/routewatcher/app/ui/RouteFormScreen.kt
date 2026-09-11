@@ -41,6 +41,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -62,15 +63,10 @@ import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.CameraPositionState
 import com.routewatcher.app.R
 import com.routewatcher.app.network.RouteOption
+import com.routewatcher.app.network.AddressPrediction
 import com.routewatcher.app.data.RouteEntity
 
 private val DRESDEN_HAUPTBAHNHOF = LatLng(51.0405, 13.7325)
-
-// Autocomplete suggestion row (placeholder shape for now)
-data class AddressPrediction(
-    val primaryText: String,
-    val secondaryText: String,
-)
 
 // Route alternative shown on the map
 // TODO: fake data for now, no real API call yet
@@ -88,7 +84,8 @@ fun RouteFormScreen(
     onOriginChange: (String) -> Unit,
     destination: String,
     onDestinationChange: (String) -> Unit,
-    predictions: List<AddressPrediction>,
+    originPredictions: List<AddressPrediction>,
+    destinationPredictions: List<AddressPrediction>,
     onOriginPredictionSelected: (AddressPrediction) -> Unit,
     onDestinationPredictionSelected: (AddressPrediction) -> Unit,
     onSwap: () -> Unit,
@@ -115,33 +112,26 @@ fun RouteFormScreen(
     onDelete: () -> Unit,
     onCancel: () -> Unit,
 ) {
-    val mapArea = @Composable {
-        RouteFormMapArea(
-            origin = origin,
-            onOriginChange = onOriginChange,
-            destination = destination,
-            onDestinationChange = onDestinationChange,
-            predictions = predictions,
-            onOriginPredictionSelected = onOriginPredictionSelected,
-            onDestinationPredictionSelected = onDestinationPredictionSelected,
-            onSwap = onSwap,
-            onMoreOptions = onMoreOptions,
-            alternatives = alternatives,
-            selectedAlternative = selectedAlternative,
-            onAlternativeSelected = onAlternativeSelected,
-            onCancel = onCancel,
-        )
+    val hasResolvedRoute = alternatives.isNotEmpty()
+    val sheetState = rememberStandardBottomSheetState(
+        initialValue = SheetValue.Hidden,
+        skipHiddenState = false,
+    )
+    val scaffoldState = rememberBottomSheetScaffoldState(bottomSheetState = sheetState)
+
+    LaunchedEffect(hasResolvedRoute) {
+        if (hasResolvedRoute) {
+            sheetState.partialExpand()
+        } else {
+            sheetState.hide()
+        }
     }
 
-    if (alternatives.isEmpty()) {
-        mapArea()
-    } else {
-        val sheetState = rememberStandardBottomSheetState(initialValue = SheetValue.PartiallyExpanded)
-        val scaffoldState = rememberBottomSheetScaffoldState(bottomSheetState = sheetState)
-        BottomSheetScaffold(
-            scaffoldState = scaffoldState,
-            sheetPeekHeight = 120.dp,
-            sheetContent = {
+    BottomSheetScaffold(
+        scaffoldState = scaffoldState,
+        sheetPeekHeight = 120.dp,
+        sheetContent = {
+            if (hasResolvedRoute) {
                 val selected = selectedAlternative?.let { alternatives.getOrNull(it) }
                 RouteFormSheetContent(
                     routeSummary = selected?.let {
@@ -166,10 +156,25 @@ fun RouteFormScreen(
                     onDelete = onDelete,
                     onCancel = onCancel,
                 )
-            },
-        ) {
-            mapArea()
-        }
+            }
+        },
+    ) {
+        RouteFormMapArea(
+            origin = origin,
+            onOriginChange = onOriginChange,
+            destination = destination,
+            onDestinationChange = onDestinationChange,
+            originPredictions = originPredictions,
+            destinationPredictions = destinationPredictions,
+            onOriginPredictionSelected = onOriginPredictionSelected,
+            onDestinationPredictionSelected = onDestinationPredictionSelected,
+            onSwap = onSwap,
+            onMoreOptions = onMoreOptions,
+            alternatives = alternatives,
+            selectedAlternative = selectedAlternative,
+            onAlternativeSelected = onAlternativeSelected,
+            onCancel = onCancel,
+        )
     }
 }
 
@@ -370,7 +375,8 @@ private fun RouteFormMapArea(
     onOriginChange: (String) -> Unit,
     destination: String,
     onDestinationChange: (String) -> Unit,
-    predictions: List<AddressPrediction>,
+    originPredictions: List<AddressPrediction>,
+    destinationPredictions: List<AddressPrediction>,
     onOriginPredictionSelected: (AddressPrediction) -> Unit,
     onDestinationPredictionSelected: (AddressPrediction) -> Unit,
     onSwap: () -> Unit,
@@ -514,13 +520,13 @@ private fun RouteFormMapArea(
                 )
             }
 
-            if (originFocused && predictions.isNotEmpty()) {
-                PredictionsList(predictions, onClick = {
+            if (originFocused && originPredictions.isNotEmpty()) {
+                PredictionsList(originPredictions, onClick = {
                     onOriginPredictionSelected(it)
                     focusManager.clearFocus()
                 })
-            } else if (destinationFocused && predictions.isNotEmpty()) {
-                PredictionsList(predictions, onClick = {
+            } else if (destinationFocused && destinationPredictions.isNotEmpty()) {
+                PredictionsList(destinationPredictions, onClick = {
                     onDestinationPredictionSelected(it)
                     focusManager.clearFocus()
                 })

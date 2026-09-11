@@ -64,12 +64,10 @@ fun RouteWatcherApp(
     //Temporary! (new add/edit route form testing)
     var routeFormOrigin by remember { mutableStateOf("") }
     var routeFormDestination by remember { mutableStateOf("") }
-    val routeFormPredictions = remember {
-        listOf(
-            AddressPrediction("Dresden Hauptbahnhof", "Dresden, Germany"),
-            AddressPrediction("Frauenkirche Dresden", "Dresden, Germany"),
-        )
-    }
+    var originResolved by remember { mutableStateOf(false) }
+    var destinationResolved by remember { mutableStateOf(false) }
+    val originPredictions by viewModel.originPredictions.collectAsState()
+    val destinationPredictions by viewModel.destinationPredictions.collectAsState()
     var routeFormSelectedAlt by remember { mutableStateOf<Int?>(null) }
     //Temporary! for testing
     val routeFormAlternatives = remember {
@@ -176,19 +174,36 @@ fun RouteWatcherApp(
         //Temporary! (new add/edit route form testing)
         is Screen.RouteForm -> RouteFormScreen(
             origin = routeFormOrigin,
-            onOriginChange = { routeFormOrigin = it },
+            onOriginChange = {
+                originResolved = false
+                routeFormOrigin = it
+                viewModel.searchOriginPredictions(context, it)
+            },
             destination = routeFormDestination,
-            onDestinationChange = { routeFormDestination = it },
-            predictions = routeFormPredictions,
-            onOriginPredictionSelected = { routeFormOrigin = it.primaryText },
-            onDestinationPredictionSelected = { routeFormDestination = it.primaryText },
+            onDestinationChange = {
+                routeFormDestination = it
+                destinationResolved = false
+                viewModel.searchDestinationPredictions(context, it)
+            },
+            originPredictions = originPredictions,
+            destinationPredictions = destinationPredictions,
+            onOriginPredictionSelected = {
+                routeFormOrigin = it.fullText
+                originResolved = true
+                viewModel.originPredictionSelected()
+            },
+            onDestinationPredictionSelected = {
+                routeFormDestination = it.fullText
+                destinationResolved = true
+                viewModel.destinationPredictionSelected()
+            },
             onSwap = {
                 val tmp = routeFormOrigin
                 routeFormOrigin = routeFormDestination
                 routeFormDestination = tmp
             },
             onMoreOptions = {},
-            alternatives = if (routeFormOrigin.isNotBlank() && routeFormDestination.isNotBlank()) {
+            alternatives = if (originResolved && destinationResolved) {
                 routeFormAlternatives
             } else {
                 emptyList()

@@ -23,6 +23,13 @@ data class RouteOption(
     val waypoints: List<Pair<Double, Double>>, // pinned points for future checks
 )
 
+// Autocomplete address suggestions
+data class AddressPrediction(
+    val primaryText: String,
+    val secondaryText: String,
+){
+    val fullText: String get() = if (secondaryText.isBlank()) primaryText else "$primaryText, $secondaryText"
+}
 object RoutesApiClient {
 
     // ---- setup / config ----

@@ -1,6 +1,7 @@
 package com.routewatcher.app.viewmodel
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.routewatcher.app.data.RouteDao
@@ -11,6 +12,7 @@ import com.routewatcher.app.network.RoutesApiClient
 import com.routewatcher.app.network.RouteOption
 import com.routewatcher.app.network.TrafficErrorCode
 import com.routewatcher.app.network.TrafficResult
+import com.routewatcher.app.network.AddressPrediction
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -24,6 +26,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import com.google.android.gms.tasks.Task
+import com.google.android.libraries.places.api.Places
+import com.google.android.libraries.places.api.model.AutocompleteSessionToken
+import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest
+
 
 // Data outcome of the "Test key now" button (SettingsScreen builds display text from this)
 data class ApiKeyTestResult(
@@ -296,5 +306,72 @@ class RouteViewModel(
             }
             _pickerState.value = _pickerState.value?.copy(customRoute = result, isRecomputing = false)
         }
+    }
+    // ---- address autocomplete ----
+    private class AddressSearchState {
+        val predictions = MutableStateFlow<List<AddressPrediction>>(emptyList())
+        var sessionToken: AutocompleteSessionToken? = null
+        var job: Job? = null
+    }
+
+    private val originSearch = AddressSearchState()
+    private val destinationSearch = AddressSearchState()
+    val originPredictions: StateFlow<List<AddressPrediction>> = originSearch.predictions.asStateFlow()
+    val destinationPredictions: StateFlow<List<AddressPrediction>> = destinationSearch.predictions.asStateFlow()
+
+    fun searchOriginPredictions(context: Context, query: String) = searchPredictions(context, query, originSearch)
+    fun searchDestinationPredictions(context: Context, query: String) =
+        searchPredictions(context, query, destinationSearch)
+
+    // A session ends once a place is picked
+    fun originPredictionSelected() {
+        originSearch.job?.cancel()
+        originSearch.sessionToken = null
+        originSearch.predictions.value = emptyList()
+    }
+    fun destinationPredictionSelected() {
+        destinationSearch.job?.cancel()
+        destinationSearch.sessionToken = null
+        destinationSearch.predictions.value = emptyList()
+    }
+
+    private fun searchPredictions(context: Context, query: String, state: AddressSearchState) {
+        state.job?.cancel()
+        if (query.isBlank()) {
+            state.predictions.value = emptyList()
+            return
+        }
+        if (state.sessionToken == null) {
+            state.sessionToken = AutocompleteSessionToken.newInstance()
+        }
+        val token = state.sessionToken!!
+        state.job = viewModelScope.launch(Dispatchers.IO) {
+            delay(300)
+            val results = try {
+                val request = FindAutocompletePredictionsRequest.builder()
+                    .setQuery(query)
+                    .setSessionToken(token)
+                    .build()
+                Places.createClient(context)
+                    .findAutocompletePredictions(request)
+                    .awaitTask()
+                    .autocompletePredictions
+                    .map {
+                        AddressPrediction(
+                            primaryText = it.getPrimaryText(null).toString(),
+                            secondaryText = it.getSecondaryText(null).toString(),
+                        )
+                    }
+            } catch (e: Exception) {
+                Log.e("RouteViewModel", "findAutocompletePredictions failed", e)
+                emptyList()
+            }
+            state.predictions.value = results
+        }
+    }
+
+    private suspend fun <T> Task<T>.awaitTask(): T = suspendCancellableCoroutine { cont ->
+        addOnSuccessListener { cont.resume(it) }
+        addOnFailureListener { cont.resumeWithException(it) }
     }
 }
