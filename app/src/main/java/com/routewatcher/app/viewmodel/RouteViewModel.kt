@@ -175,8 +175,14 @@ class RouteViewModel(
     }
 
     fun updateName(value: String) = updateEditState { it.copy(name = value) }
-    fun updateOrigin(value: String) = updateEditState { it.copy(origin = value, originResolved = false) }
-    fun updateDestination(value: String) = updateEditState { it.copy(destination = value, destinationResolved = false) }
+    fun updateOrigin(value: String) {
+        updateEditState { it.copy(origin = value, originResolved = false) }
+        clearRouteFormAlternatives()
+    }
+    fun updateDestination(value: String) {
+        updateEditState { it.copy(destination = value, destinationResolved = false) }
+        clearRouteFormAlternatives()
+    }
     fun updateHour(value: String) = updateEditState { it.copy(hour = value) }
     fun updateMinute(value: String) = updateEditState { it.copy(minute = value) }
     fun updateOffsets(value: String) = updateEditState { it.copy(offsets = value) }
@@ -251,12 +257,14 @@ class RouteViewModel(
         originSearch.sessionToken = null
         originSearch.predictions.value = emptyList()
         updateEditState { it.copy(origin = prediction.fullText, originResolved = true) }
+        fetchAlternativesIfBothResolved()
     }
     fun destinationPredictionSelected(prediction: AddressPrediction) {
         destinationSearch.job?.cancel()
         destinationSearch.sessionToken = null
         destinationSearch.predictions.value = emptyList()
         updateEditState { it.copy(destination = prediction.fullText, destinationResolved = true) }
+        fetchAlternativesIfBothResolved()
     }
 
     private fun searchPredictions(context: Context, query: String, state: AddressSearchState) {
@@ -324,6 +332,14 @@ class RouteViewModel(
         routeFormAlternativesJob?.cancel()
         updateEditState { it.copy(alternatives = emptyList(), selectedAlternativeIndex = null) }
     }
+
+    private fun fetchAlternativesIfBothResolved() {
+        val state = _editState.value ?: return
+        if (state.originResolved && state.destinationResolved) {
+            fetchRouteFormAlternatives(state.origin, state.destination)
+        }
+    }
+
     fun selectRouteAlternative(index: Int) {
         updateEditState { state ->
             val alt = state.alternatives.getOrNull(index) ?: return@updateEditState state
@@ -344,6 +360,7 @@ class RouteViewModel(
     private var stopsRecomputeJob: Job? = null
 
     fun openStopsEditor() {
+        routeFormAlternativesJob?.cancel()
         val state = _editState.value ?: return
         val existingStops = if (state.isCustomRoute) decodeWaypoints(state.lockedRouteWaypoints) else emptyList()
         _stopsEditorState.value = StopsEditorState(
@@ -399,6 +416,7 @@ class RouteViewModel(
     }
 
     fun confirmStopsEditorRoute(customRoute: RouteOption) {
+        routeFormAlternativesJob?.cancel()
         val alternative = RouteAlternative(
             option = customRoute,
             points = RoutesApiClient.decodePolyline(customRoute.encodedPolyline).map { (lat, lng) -> LatLng(lat, lng) },

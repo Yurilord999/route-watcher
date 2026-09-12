@@ -59,15 +59,6 @@ fun RouteWatcherApp(
     val originPredictions by viewModel.originPredictions.collectAsState()
     val destinationPredictions by viewModel.destinationPredictions.collectAsState()
 
-    LaunchedEffect(editState?.originResolved, editState?.destinationResolved, editState?.origin, editState?.destination) {
-        val state = editState ?: return@LaunchedEffect
-        if (state.originResolved && state.destinationResolved) {
-            viewModel.fetchRouteFormAlternatives(state.origin, state.destination)
-        } else {
-            viewModel.clearRouteFormAlternatives()
-        }
-    }
-
     when (screen) {
         is Screen.List -> RouteListScreen(
             routes = routes,

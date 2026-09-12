@@ -49,7 +49,13 @@ data class RouteEntity(
     fun directionsUrl(): String {
         val origin = URLEncoder.encode(originAddress, "UTF-8")
         val destination = URLEncoder.encode(destinationAddress, "UTF-8")
-        return "https://www.google.com/maps/dir/?api=1&origin=$origin&destination=$destination&travelmode=driving"
+        val waypoints = lockedWaypointsList()
+        val waypointsParam = if (waypoints.isEmpty()) {
+            ""
+        } else {
+            "&waypoints=" + URLEncoder.encode(waypoints.joinToString("|") { (lat, lng) -> "$lat,$lng" }, "UTF-8")
+        }
+        return "https://www.google.com/maps/dir/?api=1&origin=$origin&destination=$destination$waypointsParam&travelmode=driving"
     }
 
     companion object {
