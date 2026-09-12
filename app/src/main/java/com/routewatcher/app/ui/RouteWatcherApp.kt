@@ -81,10 +81,10 @@ fun RouteWatcherApp(
             routes = routes,
             onAddRoute = {
                 viewModel.startNewRoute()
-                screen = Screen.AddEdit },
+                screen = Screen.RouteForm },
             onEditRoute = {
                 viewModel.startEditRoute(it)
-                screen = Screen.AddEdit },
+                screen = Screen.RouteForm },
             onToggleRoute = { route, enabled ->
                 if (enabled) onRequestExactAlarmPermission()
                 viewModel.toggleRoute(context, route, enabled)
@@ -191,9 +191,18 @@ fun RouteWatcherApp(
                 screen = Screen.StopsEditor
             },
             isNewRoute = state.isNewRoute,
-            onSave = {},
-            onDelete = {},
-            onCancel = { screen = Screen.Settings },
+            onSave = {
+                viewModel.saveEditedRoute(context)
+                screen = Screen.List
+            },
+            onDelete = {
+                viewModel.deleteEditedRoute(context)
+                screen = Screen.List
+            },
+            onCancel = {
+                screen = Screen.Settings
+                screen = Screen.List
+            },
         ) }
 
         is Screen.StopsEditor -> stopsEditorState?.let { state ->
