@@ -4,8 +4,17 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [RouteEntity::class], version = 4, exportSchema = false)
+private val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL("ALTER TABLE routes ADD COLUMN lockedRouteDurationMinutes INTEGER")
+        database.execSQL("ALTER TABLE routes ADD COLUMN lockedRouteDistanceText TEXT")
+    }
+}
+
+@Database(entities = [RouteEntity::class], version = 5, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun routeDao(): RouteDao
@@ -22,6 +31,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "routewatcher.db",
                 )
+                    .addMigrations(MIGRATION_4_5)
                     // Pre-release schema change (added scheduling columns)
                     // Fine to recreate DB rather than write a real migration for now
                     // TODO: replace with real Migration objects please, can't be asked atm

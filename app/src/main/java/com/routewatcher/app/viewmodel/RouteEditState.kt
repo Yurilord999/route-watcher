@@ -2,6 +2,7 @@ package com.routewatcher.app.viewmodel
 
 import com.routewatcher.app.data.RouteEntity
 import com.routewatcher.app.network.RouteOption
+import com.routewatcher.app.network.RouteAlternative
 
 // Add/edit form state, held in the ViewModel
 data class RouteEditState(
@@ -19,6 +20,12 @@ data class RouteEditState(
     val lockedRoutePolyline: String? = null,
     val lockedRouteSummary: String? = null,
     val lockedRouteWaypoints: String? = null,
+    val lockedRouteDurationMinutes: Int? = null,
+    val lockedRouteDistanceText: String? = null,
+    val originResolved: Boolean = false,
+    val destinationResolved: Boolean = false,
+    val alternatives: List<RouteAlternative> = emptyList(),
+    val selectedAlternativeIndex: Int? = null,
 ) {
     val isNewRoute: Boolean get() = id == 0L
 
@@ -38,6 +45,10 @@ data class RouteEditState(
             lockedRoutePolyline = route.lockedRoutePolyline,
             lockedRouteSummary = route.lockedRouteSummary,
             lockedRouteWaypoints = route.lockedRouteWaypoints,
+            lockedRouteDurationMinutes = route.lockedRouteDurationMinutes,
+            lockedRouteDistanceText = route.lockedRouteDistanceText,
+            originResolved = true,
+            destinationResolved = true,
         )
     }
 }

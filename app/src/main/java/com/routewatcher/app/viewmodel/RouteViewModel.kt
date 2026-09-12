@@ -156,6 +156,21 @@ class RouteViewModel(
 
     fun startEditRoute(route: RouteEntity) {
         _editState.value = RouteEditState.from(route)
+        // Shows the route exactly as saved
+        val polyline = route.lockedRoutePolyline
+        if (!polyline.isNullOrBlank()) {
+            val lockedAlternative = RouteAlternative(
+                option = RouteOption(
+                    summary = route.lockedRouteSummary ?: "",
+                    distanceText = route.lockedRouteDistanceText ?: "",
+                    durationMinutes = route.lockedRouteDurationMinutes ?: 0,
+                    encodedPolyline = polyline,
+                    waypoints = decodeWaypoints(route.lockedRouteWaypoints),
+                ),
+                points = RoutesApiClient.decodePolyline(polyline).map { (lat, lng) -> LatLng(lat, lng) },
+            )
+            updateEditState { it.copy(alternatives = listOf(lockedAlternative), selectedAlternativeIndex = 0) }
+        }
     }
 
     private fun updateEditState(transform: (RouteEditState) -> RouteEditState) {
@@ -163,8 +178,8 @@ class RouteViewModel(
     }
 
     fun updateName(value: String) = updateEditState { it.copy(name = value) }
-    fun updateOrigin(value: String) = updateEditState { it.copy(origin = value) }
-    fun updateDestination(value: String) = updateEditState { it.copy(destination = value) }
+    fun updateOrigin(value: String) = updateEditState { it.copy(origin = value, originResolved = false) }
+    fun updateDestination(value: String) = updateEditState { it.copy(destination = value, destinationResolved = false) }
     fun updateHour(value: String) = updateEditState { it.copy(hour = value) }
     fun updateMinute(value: String) = updateEditState { it.copy(minute = value) }
     fun updateOffsets(value: String) = updateEditState { it.copy(offsets = value) }
@@ -193,6 +208,8 @@ class RouteViewModel(
             lockedRoutePolyline = state.lockedRoutePolyline,
             lockedRouteSummary = state.lockedRouteSummary,
             lockedRouteWaypoints = state.lockedRouteWaypoints,
+            lockedRouteDurationMinutes = state.lockedRouteDurationMinutes,
+            lockedRouteDistanceText = state.lockedRouteDistanceText,
         )
         viewModelScope.launch(Dispatchers.IO) {
             val id = dao.upsert(route)
@@ -248,6 +265,8 @@ class RouteViewModel(
                 lockedRoutePolyline = picked.encodedPolyline,
                 lockedRouteSummary = picked.summary,
                 lockedRouteWaypoints = encodeWaypoints(picked.waypoints),
+                lockedRouteDurationMinutes = picked.durationMinutes,
+                lockedRouteDistanceText = picked.distanceText,
                 isCustomRoute = isCustom
             )
         }
@@ -326,15 +345,17 @@ class RouteViewModel(
         searchPredictions(context, query, destinationSearch)
 
     // A session ends once a place is picked
-    fun originPredictionSelected() {
+    fun originPredictionSelected(prediction: AddressPrediction) {
         originSearch.job?.cancel()
         originSearch.sessionToken = null
         originSearch.predictions.value = emptyList()
+        updateEditState { it.copy(origin = prediction.fullText, originResolved = true) }
     }
-    fun destinationPredictionSelected() {
+    fun destinationPredictionSelected(prediction: AddressPrediction) {
         destinationSearch.job?.cancel()
         destinationSearch.sessionToken = null
         destinationSearch.predictions.value = emptyList()
+        updateEditState { it.copy(destination = prediction.fullText, destinationResolved = true) }
     }
 
     private fun searchPredictions(context: Context, query: String, state: AddressSearchState) {
@@ -378,8 +399,6 @@ class RouteViewModel(
     }
 
     // ---- route form: real route alternatives, once both fields resolve ----
-    private val _routeFormAlternatives = MutableStateFlow<List<RouteAlternative>>(emptyList())
-    val routeFormAlternatives: StateFlow<List<RouteAlternative>> = _routeFormAlternatives.asStateFlow()
     private var routeFormAlternativesJob: Job? = null
 
     fun fetchRouteFormAlternatives(originAddress: String, destinationAddress: String) {
@@ -387,18 +406,35 @@ class RouteViewModel(
         routeFormAlternativesJob = viewModelScope.launch(Dispatchers.IO) {
             val key = settingsStore.getApiKey() ?: ""
             val options = RoutesApiClient.fetchRouteAlternatives(originAddress, destinationAddress, key)
-            _routeFormAlternatives.value = options.map { option ->
+            val alternatives = options.map { option ->
                 RouteAlternative(
                     option = option,
                     points = RoutesApiClient.decodePolyline(option.encodedPolyline)
                         .map { (lat, lng) -> LatLng(lat, lng) },
                 )
             }
+            updateEditState { it.copy(alternatives = alternatives) }
+            val fastestIndex = alternatives.indices.minByOrNull { alternatives[it].option.durationMinutes }
+            if (fastestIndex != null) selectRouteAlternative(fastestIndex)
         }
     }
 
     fun clearRouteFormAlternatives() {
         routeFormAlternativesJob?.cancel()
-        _routeFormAlternatives.value = emptyList()
+        updateEditState { it.copy(alternatives = emptyList(), selectedAlternativeIndex = null) }
+    }
+    fun selectRouteAlternative(index: Int) {
+        updateEditState { state ->
+            val alt = state.alternatives.getOrNull(index) ?: return@updateEditState state
+            state.copy(
+                selectedAlternativeIndex = index,
+                lockedRoutePolyline = alt.option.encodedPolyline,
+                lockedRouteSummary = alt.option.summary,
+                lockedRouteWaypoints = encodeWaypoints(alt.option.waypoints),
+                lockedRouteDurationMinutes = alt.option.durationMinutes,
+                lockedRouteDistanceText = alt.option.distanceText,
+                isCustomRoute = false,
+            )
+        }
     }
 }

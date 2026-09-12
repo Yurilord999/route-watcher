@@ -59,38 +59,19 @@ fun RouteWatcherApp(
         viewModel.autoExpandRouteId.collect { routeId -> pendingExpandRouteId = routeId }
     }
 
-    //Temporary! (new add/edit route form testing)
-    var routeFormOrigin by remember { mutableStateOf("") }
-    var routeFormDestination by remember { mutableStateOf("") }
-    var originResolved by remember { mutableStateOf(false) }
-    var destinationResolved by remember { mutableStateOf(false) }
     val originPredictions by viewModel.originPredictions.collectAsState()
     val destinationPredictions by viewModel.destinationPredictions.collectAsState()
 
-    var routeFormSelectedAlt by remember { mutableStateOf<Int?>(null) }
-    val routeFormAlternatives by viewModel.routeFormAlternatives.collectAsState()
-    LaunchedEffect(routeFormAlternatives) {
-        routeFormSelectedAlt = if (routeFormAlternatives.isNotEmpty()) {
-            routeFormAlternatives.indices.minByOrNull { routeFormAlternatives[it].option.durationMinutes }
-        } else {
-            null
-        }
-    }
-    LaunchedEffect(originResolved, destinationResolved, routeFormOrigin, routeFormDestination) {
-        if (originResolved && destinationResolved) {
-            viewModel.fetchRouteFormAlternatives(routeFormOrigin, routeFormDestination)
+    LaunchedEffect(editState?.originResolved, editState?.destinationResolved, editState?.origin, editState?.destination) {
+        val state = editState ?: return@LaunchedEffect
+        if (state.originResolved && state.destinationResolved) {
+            viewModel.fetchRouteFormAlternatives(state.origin, state.destination)
         } else {
             viewModel.clearRouteFormAlternatives()
         }
     }
 
-    //Temporary! New add/edit form testing
-    var routeFormName by remember { mutableStateOf("") }
-    var routeFormHour by remember { mutableStateOf("8") }
-    var routeFormMinute by remember { mutableStateOf("0") }
-    var routeFormActiveDays by remember { mutableStateOf(RouteEntity.dayBitFor()) }
-    var routeFormOffsets by remember { mutableStateOf("30") }
-    var routeFormThreshold by remember { mutableStateOf("10") }
+    //Temporary! stops screen doesnt exist yet
     var routeFormStopsCount by remember { mutableStateOf(0) }
 
     when (screen) {
@@ -159,63 +140,56 @@ fun RouteWatcherApp(
             onTestKey = { viewModel.testApiKey() },
             testResult = testResult,
             onBack = { screen = Screen.List },
-            onPreviewRouteForm = { screen = Screen.RouteForm },
+            onPreviewRouteForm = {
+                viewModel.startNewRoute()
+                screen = Screen.RouteForm
+            },
         )
 
         //Temporary! (new add/edit route form testing)
-        is Screen.RouteForm -> RouteFormScreen(
-            origin = routeFormOrigin,
+        is Screen.RouteForm -> editState?.let { state -> RouteFormScreen(
+            origin = state.origin,
             onOriginChange = {
-                originResolved = false
-                routeFormOrigin = it
+                viewModel.updateOrigin(it)
                 viewModel.searchOriginPredictions(context, it)
             },
-            destination = routeFormDestination,
+            destination = state.destination,
             onDestinationChange = {
-                routeFormDestination = it
-                destinationResolved = false
+                viewModel.updateDestination(it)
                 viewModel.searchDestinationPredictions(context, it)
             },
             originPredictions = originPredictions,
             destinationPredictions = destinationPredictions,
-            onOriginPredictionSelected = {
-                routeFormOrigin = it.fullText
-                originResolved = true
-                viewModel.originPredictionSelected()
-            },
-            onDestinationPredictionSelected = {
-                routeFormDestination = it.fullText
-                destinationResolved = true
-                viewModel.destinationPredictionSelected()
-            },
+            onOriginPredictionSelected = { viewModel.originPredictionSelected(it) },
+            onDestinationPredictionSelected = { viewModel.destinationPredictionSelected(it) },
             onSwap = {
-                val tmp = routeFormOrigin
-                routeFormOrigin = routeFormDestination
-                routeFormDestination = tmp
+                val tmp = state.origin
+                viewModel.updateOrigin(state.destination)
+                viewModel.updateDestination(tmp)
             },
             onMoreOptions = {},
-            alternatives = routeFormAlternatives,
-            selectedAlternative = routeFormSelectedAlt,
-            onAlternativeSelected = { routeFormSelectedAlt = it },
-            name = routeFormName,
-            onNameChange = { routeFormName = it },
-            hour = routeFormHour,
-            onHourChange = { routeFormHour = it },
-            minute = routeFormMinute,
-            onMinuteChange = { routeFormMinute = it },
-            activeDays = routeFormActiveDays,
-            onActiveDaysChange = { routeFormActiveDays = it },
-            offsets = routeFormOffsets,
-            onOffsetsChange = { routeFormOffsets = it },
-            threshold = routeFormThreshold,
-            onThresholdChange = { routeFormThreshold = it },
+            alternatives = state.alternatives,
+            selectedAlternative = state.selectedAlternativeIndex,
+            onAlternativeSelected = { viewModel.selectRouteAlternative(it) },
+            name = state.name,
+            onNameChange = { viewModel.updateName(it) },
+            hour = state.hour,
+            onHourChange = { viewModel.updateHour(it) },
+            minute = state.minute,
+            onMinuteChange = { viewModel.updateMinute(it) },
+            activeDays = state.activeDays,
+            onActiveDaysChange = { viewModel.updateActiveDays(it) },
+            offsets = state.offsets,
+            onOffsetsChange = { viewModel.updateOffsets(it) },
+            threshold = state.threshold,
+            onThresholdChange = { viewModel.updateThreshold(it) },
             stopsCount = routeFormStopsCount,
             onAddStops = {},
-            isNewRoute = true,
+            isNewRoute = state.isNewRoute,
             onSave = {},
             onDelete = {},
             onCancel = { screen = Screen.Settings },
-        )
+        ) }
 
         is Screen.Onboarding -> OnboardingScreen(
             onSaveKey = { key -> viewModel.saveApiKey(key) },

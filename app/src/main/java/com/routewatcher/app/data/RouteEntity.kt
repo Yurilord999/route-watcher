@@ -27,6 +27,8 @@ data class RouteEntity(
     val lockedRoutePolyline: String? = null,
     val lockedRouteSummary: String? = null,
     val lockedRouteWaypoints: String? = null, // 3 pairs of (lat,lng)
+    val lockedRouteDurationMinutes: Int? = null,
+    val lockedRouteDistanceText: String? = null,
 
 ) {
     fun offsetsList(): List<Int> =
