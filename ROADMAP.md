@@ -45,4 +45,5 @@ Add/Edit form UI overhaul
   listener/hit testing layer (Maps SDK has no drag timing setting)
 - Route list fold/unfold smooth sliding transition
 - Long origin/destination address truncation required
+- GPS location features
 - General UI/visual polish needed

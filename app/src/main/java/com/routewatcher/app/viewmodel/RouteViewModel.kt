@@ -13,6 +13,7 @@ import com.routewatcher.app.network.RouteOption
 import com.routewatcher.app.network.TrafficErrorCode
 import com.routewatcher.app.network.TrafficResult
 import com.routewatcher.app.network.AddressPrediction
+import com.routewatcher.app.network.RouteAlternative
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -30,6 +31,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import com.google.android.gms.tasks.Task
+import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.AutocompleteSessionToken
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest
@@ -373,5 +375,30 @@ class RouteViewModel(
     private suspend fun <T> Task<T>.awaitTask(): T = suspendCancellableCoroutine { cont ->
         addOnSuccessListener { cont.resume(it) }
         addOnFailureListener { cont.resumeWithException(it) }
+    }
+
+    // ---- route form: real route alternatives, once both fields resolve ----
+    private val _routeFormAlternatives = MutableStateFlow<List<RouteAlternative>>(emptyList())
+    val routeFormAlternatives: StateFlow<List<RouteAlternative>> = _routeFormAlternatives.asStateFlow()
+    private var routeFormAlternativesJob: Job? = null
+
+    fun fetchRouteFormAlternatives(originAddress: String, destinationAddress: String) {
+        routeFormAlternativesJob?.cancel()
+        routeFormAlternativesJob = viewModelScope.launch(Dispatchers.IO) {
+            val key = settingsStore.getApiKey() ?: ""
+            val options = RoutesApiClient.fetchRouteAlternatives(originAddress, destinationAddress, key)
+            _routeFormAlternatives.value = options.map { option ->
+                RouteAlternative(
+                    option = option,
+                    points = RoutesApiClient.decodePolyline(option.encodedPolyline)
+                        .map { (lat, lng) -> LatLng(lat, lng) },
+                )
+            }
+        }
+    }
+
+    fun clearRouteFormAlternatives() {
+        routeFormAlternativesJob?.cancel()
+        _routeFormAlternatives.value = emptyList()
     }
 }

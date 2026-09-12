@@ -14,8 +14,6 @@ import com.routewatcher.app.data.SettingsStore
 import com.routewatcher.app.data.RouteEntity
 import com.routewatcher.app.viewmodel.RouteViewModel
 import com.routewatcher.app.viewmodel.RouteViewModelFactory
-import com.routewatcher.app.network.RouteOption
-import com.google.android.gms.maps.model.LatLng
 
 // Screen the app is currently showing
 private sealed class Screen {
@@ -68,29 +66,22 @@ fun RouteWatcherApp(
     var destinationResolved by remember { mutableStateOf(false) }
     val originPredictions by viewModel.originPredictions.collectAsState()
     val destinationPredictions by viewModel.destinationPredictions.collectAsState()
+
     var routeFormSelectedAlt by remember { mutableStateOf<Int?>(null) }
-    //Temporary! for testing
-    val routeFormAlternatives = remember {
-        listOf(
-            FakeRouteAlternative(
-                RouteOption("Route A", "5.4 km", 14, "", emptyList()),
-                listOf(LatLng(51.0405, 13.7325), LatLng(51.0455, 13.7380), LatLng(51.0509, 13.7442)),
-            ),
-            FakeRouteAlternative(
-                RouteOption("Route B", "6.1 km", 17, "", emptyList()),
-                listOf(
-                    LatLng(51.0405, 13.7325), LatLng(51.0430, 13.7300),
-                    LatLng(51.0480, 13.7350), LatLng(51.0509, 13.7442),
-                ),
-            ),
-            FakeRouteAlternative(
-                RouteOption("Route C", "5.9 km", 16, "", emptyList()),
-                listOf(
-                    LatLng(51.0405, 13.7325), LatLng(51.0420, 13.7420),
-                    LatLng(51.0470, 13.7460), LatLng(51.0509, 13.7442),
-                ),
-            ),
-        )
+    val routeFormAlternatives by viewModel.routeFormAlternatives.collectAsState()
+    LaunchedEffect(routeFormAlternatives) {
+        routeFormSelectedAlt = if (routeFormAlternatives.isNotEmpty()) {
+            routeFormAlternatives.indices.minByOrNull { routeFormAlternatives[it].option.durationMinutes }
+        } else {
+            null
+        }
+    }
+    LaunchedEffect(originResolved, destinationResolved, routeFormOrigin, routeFormDestination) {
+        if (originResolved && destinationResolved) {
+            viewModel.fetchRouteFormAlternatives(routeFormOrigin, routeFormDestination)
+        } else {
+            viewModel.clearRouteFormAlternatives()
+        }
     }
 
     //Temporary! New add/edit form testing
@@ -203,11 +194,7 @@ fun RouteWatcherApp(
                 routeFormDestination = tmp
             },
             onMoreOptions = {},
-            alternatives = if (originResolved && destinationResolved) {
-                routeFormAlternatives
-            } else {
-                emptyList()
-            },
+            alternatives = routeFormAlternatives,
             selectedAlternative = routeFormSelectedAlt,
             onAlternativeSelected = { routeFormSelectedAlt = it },
             name = routeFormName,

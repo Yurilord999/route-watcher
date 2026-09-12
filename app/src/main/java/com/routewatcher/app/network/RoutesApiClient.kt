@@ -9,6 +9,7 @@ import org.json.JSONObject
 import org.json.JSONArray
 import java.util.concurrent.TimeUnit
 import java.util.Locale
+import com.google.android.gms.maps.model.LatLng
 
 // One selectable road option returned by computeRoutes with alternatives
 data class RouteOption(
@@ -30,6 +31,13 @@ data class AddressPrediction(
 ){
     val fullText: String get() = if (secondaryText.isBlank()) primaryText else "$primaryText, $secondaryText"
 }
+
+// Route alternative polyline, ready to render
+data class RouteAlternative(
+    val option: RouteOption,
+    val points: List<LatLng>,
+)
+
 object RoutesApiClient {
 
     // ---- setup / config ----

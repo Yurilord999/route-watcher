@@ -64,16 +64,10 @@ import com.google.maps.android.compose.CameraPositionState
 import com.routewatcher.app.R
 import com.routewatcher.app.network.RouteOption
 import com.routewatcher.app.network.AddressPrediction
+import com.routewatcher.app.network.RouteAlternative
 import com.routewatcher.app.data.RouteEntity
 
 private val DRESDEN_HAUPTBAHNHOF = LatLng(51.0405, 13.7325)
-
-// Route alternative shown on the map
-// TODO: fake data for now, no real API call yet
-data class FakeRouteAlternative(
-    val option: RouteOption,
-    val points: List<LatLng>,
-)
 
 // ---- fullscreen add/edit route form: search fields + map ----
 // Bare state: just the map. Full state: includes draggable bottom sheet.
@@ -90,7 +84,7 @@ fun RouteFormScreen(
     onDestinationPredictionSelected: (AddressPrediction) -> Unit,
     onSwap: () -> Unit,
     onMoreOptions: () -> Unit,
-    alternatives: List<FakeRouteAlternative>,
+    alternatives: List<RouteAlternative>,
     selectedAlternative: Int?,
     onAlternativeSelected: (Int) -> Unit,
     name: String,
@@ -381,7 +375,7 @@ private fun RouteFormMapArea(
     onDestinationPredictionSelected: (AddressPrediction) -> Unit,
     onSwap: () -> Unit,
     onMoreOptions: () -> Unit,
-    alternatives: List<FakeRouteAlternative>,
+    alternatives: List<RouteAlternative>,
     selectedAlternative: Int?,
     onAlternativeSelected: (Int) -> Unit,
     onCancel: () -> Unit,
@@ -413,9 +407,9 @@ private fun RouteFormMapArea(
                 Polyline(
                     points = alt.points,
                     color = if (index == selectedAlternative) {
-                        MaterialTheme.colorScheme.primary
+                        Color(0xFF1A73E8)
                     } else {
-                        Color(0xFFB0BEC5)
+                        Color(0xFF8AB4F8)
                     },
                     width = if (index == selectedAlternative) 14f else 8f,
                     clickable = true,
