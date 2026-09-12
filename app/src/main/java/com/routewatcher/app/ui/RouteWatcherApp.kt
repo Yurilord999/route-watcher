@@ -24,6 +24,7 @@ private sealed class Screen {
     data object Onboarding : Screen()
     //Temporary! (new add/edit route form testing)
     data object RouteForm : Screen()
+    data object StopsEditor : Screen()
 }
 
 // Top level screen router
@@ -53,6 +54,7 @@ fun RouteWatcherApp(
     val editState by viewModel.editState.collectAsState()
     val pickerState by viewModel.pickerState.collectAsState()
     val checkStatuses by viewModel.checkStatuses.collectAsState()
+    val stopsEditorState by viewModel.stopsEditorState.collectAsState()
 
     var pendingExpandRouteId by remember { mutableStateOf(expandRouteIdOnStart) }
     LaunchedEffect(Unit) {
@@ -184,12 +186,35 @@ fun RouteWatcherApp(
             threshold = state.threshold,
             onThresholdChange = { viewModel.updateThreshold(it) },
             stopsCount = routeFormStopsCount,
-            onAddStops = {},
+            onAddStops = {
+                viewModel.openStopsEditor()
+                screen = Screen.StopsEditor
+            },
             isNewRoute = state.isNewRoute,
             onSave = {},
             onDelete = {},
             onCancel = { screen = Screen.Settings },
         ) }
+
+        is Screen.StopsEditor -> stopsEditorState?.let { state ->
+            StopsEditorScreen(
+                baseRoutePolyline = editState?.lockedRoutePolyline,
+                stops = state.stops,
+                onAddStop = { lat, lng -> viewModel.addStopsEditorStop(lat, lng) },
+                onMoveStop = { index, lat, lng -> viewModel.moveStopsEditorStop(index, lat, lng) },
+                onRemoveStop = { viewModel.removeStopsEditorStop(it) },
+                customRoute = state.customRoute,
+                isRecomputing = state.isRecomputing,
+                onConfirm = { customRoute ->
+                    viewModel.confirmStopsEditorRoute(customRoute)
+                    screen = Screen.RouteForm
+                },
+                onCancel = {
+                    viewModel.cancelStopsEditor()
+                    screen = Screen.RouteForm
+                },
+            )
+        }
 
         is Screen.Onboarding -> OnboardingScreen(
             onSaveKey = { key -> viewModel.saveApiKey(key) },

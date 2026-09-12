@@ -437,4 +437,89 @@ class RouteViewModel(
             )
         }
     }
+    // ---- custom stops editor ----
+    private val _stopsEditorState = MutableStateFlow<StopsEditorState?>(null)
+    val stopsEditorState: StateFlow<StopsEditorState?> = _stopsEditorState.asStateFlow()
+    private var stopsRecomputeJob: Job? = null
+
+    fun openStopsEditor() {
+        val state = _editState.value ?: return
+        val existingStops = if (state.isCustomRoute) decodeWaypoints(state.lockedRouteWaypoints) else emptyList()
+        _stopsEditorState.value = StopsEditorState(
+            origin = state.origin,
+            destination = state.destination,
+            stops = existingStops,
+        )
+        // Recomputes right away so reopening a (already) customized route shows the real path
+        if (existingStops.isNotEmpty()) scheduleStopsRecompute()
+    }
+
+    fun addStopsEditorStop(lat: Double, lng: Double) {
+        val state = _stopsEditorState.value ?: return
+        _stopsEditorState.value = state.copy(stops = state.stops + (lat to lng))
+        scheduleStopsRecompute()
+    }
+
+    fun moveStopsEditorStop(index: Int, lat: Double, lng: Double) {
+        val state = _stopsEditorState.value ?: return
+        if (index !in state.stops.indices) return
+        _stopsEditorState.value = state.copy(
+            stops = state.stops.toMutableList().also { it[index] = lat to lng },
+        )
+        scheduleStopsRecompute()
+    }
+
+    fun removeStopsEditorStop(index: Int) {
+        val state = _stopsEditorState.value ?: return
+        if (index !in state.stops.indices) return
+        _stopsEditorState.value = state.copy(
+            stops = state.stops.toMutableList().also { it.removeAt(index) },
+        )
+        scheduleStopsRecompute()
+    }
+
+    private fun scheduleStopsRecompute() {
+        stopsRecomputeJob?.cancel()
+        val state = _stopsEditorState.value ?: return
+        if (state.stops.isEmpty()) {
+            _stopsEditorState.value = state.copy(customRoute = null, isRecomputing = false)
+            return
+        }
+        stopsRecomputeJob = viewModelScope.launch {
+            _stopsEditorState.value = _stopsEditorState.value?.copy(isRecomputing = true)
+            delay(600) //milliseconds
+            val current = _stopsEditorState.value ?: return@launch
+            val key = settingsStore.getApiKey() ?: ""
+            val result = withContext(Dispatchers.IO) {
+                RoutesApiClient.fetchRouteThroughStops(current.origin, current.destination, current.stops, key)
+            }
+            _stopsEditorState.value = _stopsEditorState.value?.copy(customRoute = result, isRecomputing = false)
+        }
+    }
+
+    fun confirmStopsEditorRoute(customRoute: RouteOption) {
+        val alternative = RouteAlternative(
+            option = customRoute,
+            points = RoutesApiClient.decodePolyline(customRoute.encodedPolyline).map { (lat, lng) -> LatLng(lat, lng) },
+        )
+        updateEditState {
+            it.copy(
+                lockedRoutePolyline = customRoute.encodedPolyline,
+                lockedRouteSummary = customRoute.summary,
+                lockedRouteWaypoints = encodeWaypoints(customRoute.waypoints),
+                lockedRouteDurationMinutes = customRoute.durationMinutes,
+                lockedRouteDistanceText = customRoute.distanceText,
+                isCustomRoute = true,
+                alternatives = listOf(alternative),
+                selectedAlternativeIndex = 0,
+            )
+        }
+        stopsRecomputeJob?.cancel()
+        _stopsEditorState.value = null
+    }
+
+    fun cancelStopsEditor() {
+        stopsRecomputeJob?.cancel()
+        _stopsEditorState.value = null
+    }
 }

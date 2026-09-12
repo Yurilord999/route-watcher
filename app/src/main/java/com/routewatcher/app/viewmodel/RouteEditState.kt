@@ -67,6 +67,15 @@ data class RoutePickerState(
     val missingApiKey: Boolean = false,
 )
 
+// Stops editor (while open)
+data class StopsEditorState(
+    val origin: String,
+    val destination: String,
+    val stops: List<Pair<Double, Double>> = emptyList(),
+    val customRoute: RouteOption? = null,
+    val isRecomputing: Boolean = false,
+)
+
 fun encodeWaypoints(waypoints: List<Pair<Double, Double>>): String =
     waypoints.joinToString(";") { "${it.first},${it.second}" }
 
