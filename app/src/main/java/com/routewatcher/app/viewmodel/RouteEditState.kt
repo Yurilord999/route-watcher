@@ -28,6 +28,7 @@ data class RouteEditState(
     val selectedAlternativeIndex: Int? = null,
 ) {
     val isNewRoute: Boolean get() = id == 0L
+    val stopsCount: Int get() = if (isCustomRoute) decodeWaypoints(lockedRouteWaypoints).size else 0
 
     companion object {
         fun from(route: RouteEntity) = RouteEditState(
@@ -52,20 +53,6 @@ data class RouteEditState(
         )
     }
 }
-
-// State of the road picker screen (while open)
-data class RoutePickerState(
-    val origin: String,
-    val destination: String,
-    val routeOptions: List<RouteOption> = emptyList(),
-    val isLoading: Boolean = true,
-    val isCustomizing: Boolean = false,
-    val stops: List<Pair<Double, Double>> = emptyList(),
-    val customRoute: RouteOption? = null,
-    val isRecomputing: Boolean = false,
-    // Only true if there is no API key set (different to 0 routes found)
-    val missingApiKey: Boolean = false,
-)
 
 // Stops editor (while open)
 data class StopsEditorState(

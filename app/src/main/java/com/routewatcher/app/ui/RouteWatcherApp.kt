@@ -11,18 +11,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.routewatcher.app.data.RouteDao
 import com.routewatcher.app.data.SettingsStore
-import com.routewatcher.app.data.RouteEntity
 import com.routewatcher.app.viewmodel.RouteViewModel
 import com.routewatcher.app.viewmodel.RouteViewModelFactory
 
 // Screen the app is currently showing
 private sealed class Screen {
     data object List : Screen()
-    data object AddEdit : Screen()
     data object Settings : Screen()
-    data object PickRoad : Screen()
     data object Onboarding : Screen()
-    //Temporary! (new add/edit route form testing)
     data object RouteForm : Screen()
     data object StopsEditor : Screen()
 }
@@ -52,7 +48,6 @@ fun RouteWatcherApp(
     val apiKey by viewModel.apiKey.collectAsState()
     val testResult by viewModel.testResult.collectAsState()
     val editState by viewModel.editState.collectAsState()
-    val pickerState by viewModel.pickerState.collectAsState()
     val checkStatuses by viewModel.checkStatuses.collectAsState()
     val stopsEditorState by viewModel.stopsEditorState.collectAsState()
 
@@ -72,9 +67,6 @@ fun RouteWatcherApp(
             viewModel.clearRouteFormAlternatives()
         }
     }
-
-    //Temporary! stops screen doesnt exist yet
-    var routeFormStopsCount by remember { mutableStateOf(0) }
 
     when (screen) {
         is Screen.List -> RouteListScreen(
@@ -97,44 +89,6 @@ fun RouteWatcherApp(
             pendingExpandRouteId = pendingExpandRouteId,
             onPendingExpandConsumed = { pendingExpandRouteId = null },
         )
-        is Screen.AddEdit -> editState?.let { state ->
-            AddEditRouteScreen(
-                name = state.name,
-                onNameChange = { viewModel.updateName(it) },
-                origin = state.origin,
-                onOriginChange = { viewModel.updateOrigin(it) },
-                destination = state.destination,
-                onDestinationChange = { viewModel.updateDestination(it) },
-                hour = state.hour,
-                onHourChange = { viewModel.updateHour(it) },
-                minute = state.minute,
-                onMinuteChange = { viewModel.updateMinute(it) },
-                activeDays = state.activeDays,
-                onActiveDaysChange = { viewModel.updateActiveDays(it) },
-                offsets = state.offsets,
-                onOffsetsChange = { viewModel.updateOffsets(it) },
-                threshold = state.threshold,
-                onThresholdChange = { viewModel.updateThreshold(it) },
-                lockedRouteSummary = state.lockedRouteSummary,
-                isNewRoute = state.isNewRoute,
-                onSave = {
-                    viewModel.saveEditedRoute(context)
-                    screen = Screen.List
-                },
-                onDelete = {
-                    viewModel.deleteEditedRoute(context)
-                    screen = Screen.List
-                },
-                onPickRoad = {
-                    viewModel.openRoadPicker()
-                    screen = Screen.PickRoad
-                },
-                onCancel = {
-                    viewModel.cancelEdit()
-                    screen = Screen.List
-                },
-            )
-        }
         is Screen.Settings -> SettingsScreen(
             currentKey = apiKey,
             onSaveKey = { key -> viewModel.saveApiKey(key) },
@@ -142,13 +96,8 @@ fun RouteWatcherApp(
             onTestKey = { viewModel.testApiKey() },
             testResult = testResult,
             onBack = { screen = Screen.List },
-            onPreviewRouteForm = {
-                viewModel.startNewRoute()
-                screen = Screen.RouteForm
-            },
         )
 
-        //Temporary! (new add/edit route form testing)
         is Screen.RouteForm -> editState?.let { state -> RouteFormScreen(
             origin = state.origin,
             onOriginChange = {
@@ -185,7 +134,7 @@ fun RouteWatcherApp(
             onOffsetsChange = { viewModel.updateOffsets(it) },
             threshold = state.threshold,
             onThresholdChange = { viewModel.updateThreshold(it) },
-            stopsCount = routeFormStopsCount,
+            stopsCount = state.stopsCount,
             onAddStops = {
                 viewModel.openStopsEditor()
                 screen = Screen.StopsEditor
@@ -200,7 +149,7 @@ fun RouteWatcherApp(
                 screen = Screen.List
             },
             onCancel = {
-                screen = Screen.Settings
+                viewModel.cancelEdit()
                 screen = Screen.List
             },
         ) }
@@ -232,33 +181,5 @@ fun RouteWatcherApp(
                 screen = Screen.List
             },
         )
-        is Screen.PickRoad -> pickerState?.let { state ->
-            RoutePickerScreen(
-                routeOptions = state.routeOptions,
-                isLoading = state.isLoading,
-                initiallySelectedPolyline = editState?.lockedRoutePolyline,
-                onConfirm = { picked, isCustom ->
-                    viewModel.confirmPickedRoute(picked, isCustom)
-                    screen = Screen.AddEdit
-                },
-                onCancel = {
-                    viewModel.cancelRoadPicker()
-                    screen = Screen.AddEdit
-                },
-                isCustomizing = state.isCustomizing,
-                stops = state.stops,
-                onModeChange = { viewModel.setPickerCustomizing(it) },
-                onAddStop = { lat, lng -> viewModel.addPickerStop(lat, lng) },
-                onMoveStop = { index, lat, lng -> viewModel.movePickerStop(index, lat, lng) },
-                onRemoveStop = { viewModel.removePickerStop(it) },
-                customRoute = state.customRoute,
-                isRecomputing = state.isRecomputing,
-                missingApiKey = state.missingApiKey,
-                onGoToSettings = {
-                    viewModel.cancelRoadPicker()
-                    screen = Screen.Settings
-                },
-            )
-        }
     }
 }

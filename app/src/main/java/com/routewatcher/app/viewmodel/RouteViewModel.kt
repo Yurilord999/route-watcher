@@ -147,9 +147,6 @@ class RouteViewModel(
     private val _editState = MutableStateFlow<RouteEditState?>(null)
     val editState: StateFlow<RouteEditState?> = _editState.asStateFlow()
 
-    private val _pickerState = MutableStateFlow<RoutePickerState?>(null)
-    val pickerState: StateFlow<RoutePickerState?> = _pickerState.asStateFlow()
-
     fun startNewRoute() {
         _editState.value = RouteEditState()
     }
@@ -188,7 +185,6 @@ class RouteViewModel(
 
     fun cancelEdit() {
         _editState.value = null
-        _pickerState.value = null
     }
 
     fun saveEditedRoute(context: Context) {
@@ -233,101 +229,6 @@ class RouteViewModel(
         _editState.value = null
     }
 
-    fun openRoadPicker() {
-        val state = _editState.value ?: return
-        val existingStops = if (state.isCustomRoute) decodeWaypoints(state.lockedRouteWaypoints) else emptyList()
-        val key = settingsStore.getApiKey()
-        val hasKey = !key.isNullOrBlank()
-        _pickerState.value = RoutePickerState(
-            origin = state.origin,
-            destination = state.destination,
-            isCustomizing = existingStops.isNotEmpty(),
-            stops = existingStops,
-            isLoading = hasKey,
-            missingApiKey = !hasKey,
-            )
-        // No point in calling the API without a key
-        if (hasKey) {
-            viewModelScope.launch(Dispatchers.IO) {
-                val options =
-                    RoutesApiClient.fetchRouteAlternatives(state.origin, state.destination, key)
-                _pickerState.value =
-                    _pickerState.value?.copy(routeOptions = options, isLoading = false)
-            }
-        }
-        // Recomputes right away so reopening a customized route shows its real
-        if (existingStops.isNotEmpty()) scheduleStopRecompute()
-    }
-
-    fun confirmPickedRoute(picked: RouteOption, isCustom: Boolean) {
-        updateEditState {
-            it.copy(
-                lockedRoutePolyline = picked.encodedPolyline,
-                lockedRouteSummary = picked.summary,
-                lockedRouteWaypoints = encodeWaypoints(picked.waypoints),
-                lockedRouteDurationMinutes = picked.durationMinutes,
-                lockedRouteDistanceText = picked.distanceText,
-                isCustomRoute = isCustom
-            )
-        }
-        _pickerState.value = null
-    }
-
-    fun cancelRoadPicker() {
-        recomputeJob?.cancel()
-        _pickerState.value = null
-    }
-
-    fun setPickerCustomizing(customizing: Boolean) {
-        _pickerState.value = _pickerState.value?.copy(isCustomizing = customizing)
-    }
-
-    private var recomputeJob: Job? = null
-
-    fun addPickerStop(lat: Double, lng: Double) {
-        val state = _pickerState.value ?: return
-        _pickerState.value = state.copy(stops = state.stops + (lat to lng))
-        scheduleStopRecompute()
-    }
-
-    fun movePickerStop(index: Int, lat: Double, lng: Double) {
-        val state = _pickerState.value ?: return
-        if (index !in state.stops.indices) return
-        _pickerState.value = state.copy(
-            stops = state.stops.toMutableList().also { it[index] = lat to lng },
-        )
-        scheduleStopRecompute()
-    }
-
-    fun removePickerStop(index: Int) {
-        val state = _pickerState.value ?: return
-        if (index !in state.stops.indices) return
-        _pickerState.value = state.copy(
-            stops = state.stops.toMutableList().also { it.removeAt(index) },
-        )
-        scheduleStopRecompute()
-    }
-
-    // Fires on each intermediate drag position (not just on release)
-    // Cancel & (re)launch means only the last call reaches the network call (when the marker stops moving)
-    private fun scheduleStopRecompute() {
-        recomputeJob?.cancel() // stop the previous pending recompute, if there is one
-        val state = _pickerState.value ?: return
-        if (state.stops.isEmpty()) {
-            _pickerState.value = state.copy(customRoute = null, isRecomputing = false)
-            return
-        }
-        recomputeJob = viewModelScope.launch { // start a new pending recompute
-            _pickerState.value = _pickerState.value?.copy(isRecomputing = true)
-            delay(600) //milliseconds
-            val current = _pickerState.value ?: return@launch
-            val key = settingsStore.getApiKey() ?: ""
-            val result = withContext(Dispatchers.IO) {
-                RoutesApiClient.fetchRouteThroughStops(current.origin, current.destination, current.stops, key)
-            }
-            _pickerState.value = _pickerState.value?.copy(customRoute = result, isRecomputing = false)
-        }
-    }
     // ---- address autocomplete ----
     private class AddressSearchState {
         val predictions = MutableStateFlow<List<AddressPrediction>>(emptyList())

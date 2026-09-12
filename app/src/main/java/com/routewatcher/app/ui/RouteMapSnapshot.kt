@@ -39,7 +39,6 @@ import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapEffect
 
 // A small preview of a routes saved polyline, shown in expanded route list
-// Reuses Maps SDK compose library already used in RoutePickerScreen
 // No network call of its own (just renders an already decoded polyline locally)
 @Composable
 fun RouteMapSnapshot(route: RouteEntity, modifier: Modifier = Modifier, onMovingChanged: (Boolean) -> Unit) {

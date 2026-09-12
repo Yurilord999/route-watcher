@@ -27,10 +27,6 @@
     <string name="preset_weekend">Weekend</string>
     <string name="check_offsets">Check minutes before (e.g. 60,30,10)</string>
     <string name="delay_threshold">Alert if delay is at least (min)</string>
-    <string name="picked_road_summary">Picked road: %1$s</string>
-    <string name="no_road_picked">No specific road picked yet</string>
-    <string name="change_picked_road">Change picked road</string>
-    <string name="pick_road_on_map">Pick road on map</string>
     <string name="route_form_bubble_minutes">%1$d min</string>
     <string name="route_form_add_stops">Add stops</string>
     <string name="route_form_summary">%1$d min (%2$s)</string>
@@ -40,12 +36,6 @@
     </plurals>
 
     <!-- Road picker -->
-    <string name="picker_title">Pick your road</string>
-    <string name="mode_browse">Browse</string>
-    <string name="mode_customize">Customize</string>
-    <string name="no_routes_found">Couldn\'t find any routes between those addresses.</string>
-    <string name="no_api_key_picker">No Routes API key is set, so routes can\'t be looked up yet.</string>
-    <string name="go_to_settings">Go to Settings</string>
     <string name="recalculating_route">Recalculating route…</string>
     <string name="customize_hint">Tap the road to add a stop, drag a stop to move it.</string>
     <string name="use_this_road">Use this road</string>

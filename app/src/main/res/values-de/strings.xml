@@ -27,10 +27,6 @@
     <string name="preset_weekend">Wochenende</string>
     <string name="check_offsets">Minuten vorher prüfen (z.B. 60,30,10)</string>
     <string name="delay_threshold">Warnen ab Verzögerung (Min)</string>
-    <string name="picked_road_summary">Gewählte Straße: %1$s</string>
-    <string name="no_road_picked">Noch keine bestimmte Straße gewählt</string>
-    <string name="change_picked_road">Gewählte Straße ändern</string>
-    <string name="pick_road_on_map">Straße auf der Karte auswählen</string>
     <string name="route_form_bubble_minutes">%1$d Min.</string>
     <string name="route_form_add_stops">Zwischenstopps</string>
     <string name="route_form_summary">%1$d Min. (%2$s)</string>
@@ -40,12 +36,6 @@
     </plurals>
 
     <!-- Road picker -->
-    <string name="picker_title">Straße auswählen</string>
-    <string name="mode_browse">Durchsuchen</string>
-    <string name="mode_customize">Anpassen</string>
-    <string name="no_routes_found">Zwischen diesen Adressen wurden keine Routen gefunden.</string>
-    <string name="no_api_key_picker">Es ist kein Routes-API-Schlüssel hinterlegt, daher können noch keine Routen gesucht werden.</string>
-    <string name="go_to_settings">Zu den Einstellungen</string>
     <string name="recalculating_route">Route wird neu berechnet…</string>
     <string name="customize_hint">Tippe auf die Straße, um einen Stopp hinzuzufügen, ziehe einen Stopp, um ihn zu verschieben.</string>
     <string name="use_this_road">Diese Straße verwenden</string>
