@@ -53,6 +53,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.unit.Dp
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -61,6 +63,8 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.CameraPositionState
+import com.google.maps.android.compose.rememberMarkerState
+import com.google.maps.android.compose.MarkerComposable
 import com.routewatcher.app.R
 import com.routewatcher.app.network.RouteOption
 import com.routewatcher.app.network.AddressPrediction
@@ -167,6 +171,8 @@ fun RouteFormScreen(
             alternatives = alternatives,
             selectedAlternative = selectedAlternative,
             onAlternativeSelected = onAlternativeSelected,
+            stopsCount = stopsCount,
+            onAddStops = onAddStops,
             onCancel = onCancel,
         )
     }
@@ -378,6 +384,8 @@ private fun RouteFormMapArea(
     alternatives: List<RouteAlternative>,
     selectedAlternative: Int?,
     onAlternativeSelected: (Int) -> Unit,
+    stopsCount: Int,
+    onAddStops: () -> Unit,
     onCancel: () -> Unit,
 ) {
 
@@ -415,6 +423,40 @@ private fun RouteFormMapArea(
                     clickable = true,
                     onClick = { onAlternativeSelected(index) },
                 )
+            }
+
+            // ---- origin / stop / destination dots for selected route ----
+            val selectedAlt = selectedAlternative?.let { alternatives.getOrNull(it) }
+            selectedAlt?.let { alt ->
+                alt.points.firstOrNull()?.let { originPoint ->
+                    MarkerComposable(
+                        state = rememberMarkerState(position = originPoint),
+                        anchor = Offset(0.5f, 0.5f),
+                    ) {
+                        RoutePointDot(fillColor = Color.White, ringColor = Color(0xFF1A73E8))
+                    }
+                }
+                alt.option.waypoints.forEach { (lat, lng) ->
+                    MarkerComposable(
+                        state = rememberMarkerState(position = LatLng(lat, lng)),
+                        anchor = Offset(0.5f, 0.5f),
+                    ) {
+                        RoutePointDot(
+                            fillColor = Color(0xFF8AB4F8),
+                            ringColor = Color.White,
+                            size = 10.dp,
+                            ringWidth = 2.dp,
+                        )
+                    }
+                }
+                alt.points.lastOrNull()?.let { destinationPoint ->
+                    MarkerComposable(
+                        state = rememberMarkerState(position = destinationPoint),
+                        anchor = Offset(0.5f, 0.5f),
+                    ) {
+                        RoutePointDot(fillColor = Color(0xFF1A73E8), ringColor = Color.White)
+                    }
+                }
             }
         }
 
@@ -488,6 +530,22 @@ private fun RouteFormMapArea(
                 )
             }
             HorizontalDivider()
+            if (stopsCount > 0) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(onClick = onAddStops)
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                ) {
+                    Text(
+                        pluralStringResource(R.plurals.route_form_stops_count, stopsCount, stopsCount),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                HorizontalDivider()
+            }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(horizontal = 8.dp),
@@ -537,6 +595,24 @@ private fun latLngToScreenOffset(cameraPositionState: CameraPositionState, latLn
         ?.toScreenLocation(latLng)
         ?.let { IntOffset(it.x, it.y) }
         ?: IntOffset.Zero
+}
+// Small dot. Highlighting origin, stop, or destination on the map
+@Composable
+private fun RoutePointDot(
+    fillColor: Color,
+    ringColor: Color,
+    size: Dp = 14.dp,
+    ringWidth: Dp = 3.dp,
+) {
+    Box(
+        modifier = Modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(ringColor)
+            .padding(ringWidth)
+            .clip(CircleShape)
+            .background(fillColor),
+    )
 }
 
 // displays route durations
