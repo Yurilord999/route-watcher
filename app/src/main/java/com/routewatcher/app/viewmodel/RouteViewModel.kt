@@ -14,6 +14,7 @@ import com.routewatcher.app.network.TrafficErrorCode
 import com.routewatcher.app.network.TrafficResult
 import com.routewatcher.app.network.AddressPrediction
 import com.routewatcher.app.network.RouteAlternative
+import com.routewatcher.app.network.PlacesBillingConfig
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -34,7 +35,9 @@ import com.google.android.gms.tasks.Task
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.AutocompleteSessionToken
+import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest
+import com.google.android.libraries.places.api.net.FetchPlaceRequest
 
 
 // Data outcome of the "Test key now" button (SettingsScreen builds display text from this)
@@ -252,19 +255,48 @@ class RouteViewModel(
         searchPredictions(context, query, destinationSearch)
 
     // A session ends once a place is picked
-    fun originPredictionSelected(prediction: AddressPrediction) {
+    fun originPredictionSelected(context: Context, prediction: AddressPrediction) {
         originSearch.job?.cancel()
+        val usedToken = originSearch.sessionToken
         originSearch.sessionToken = null
         originSearch.predictions.value = emptyList()
         updateEditState { it.copy(origin = prediction.fullText, originResolved = true) }
         fetchAlternativesIfBothResolved()
+        if (PlacesBillingConfig.USE_LEGACY) {
+            terminateAutocompleteSession(context, prediction.placeId, usedToken)
+        }
     }
-    fun destinationPredictionSelected(prediction: AddressPrediction) {
+    fun destinationPredictionSelected(context: Context, prediction: AddressPrediction) {
         destinationSearch.job?.cancel()
+        val usedToken = destinationSearch.sessionToken
         destinationSearch.sessionToken = null
         destinationSearch.predictions.value = emptyList()
         updateEditState { it.copy(destination = prediction.fullText, destinationResolved = true) }
         fetchAlternativesIfBothResolved()
+        if (PlacesBillingConfig.USE_LEGACY) {
+            terminateAutocompleteSession(context, prediction.placeId, usedToken)
+        }
+    }
+
+    // Ends the autocomplete session so the whole session is billed for free under Legacy Places pricing
+    // (PlacesBillingConfig.USE_LEGACY = true).
+    // Only requests Place.Field.ID. Never add more fields here, or this stops being free.
+    // The result is discarded. This call purely exists for billing, not for its data.
+    private fun terminateAutocompleteSession(
+        context: Context,
+        placeId: String,
+        sessionToken: AutocompleteSessionToken?,
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val request = FetchPlaceRequest.builder(placeId, listOf(Place.Field.ID))
+                    .setSessionToken(sessionToken)
+                    .build()
+                Places.createClient(context).fetchPlace(request).awaitTask()
+            } catch (e: Exception) {
+                Log.e("RouteViewModel", "Autocomplete session termination failed", e)
+            }
+        }
     }
 
     private fun searchPredictions(context: Context, query: String, state: AddressSearchState) {
@@ -292,6 +324,7 @@ class RouteViewModel(
                         AddressPrediction(
                             primaryText = it.getPrimaryText(null).toString(),
                             secondaryText = it.getSecondaryText(null).toString(),
+                            placeId = it.placeId,
                         )
                     }
             } catch (e: Exception) {

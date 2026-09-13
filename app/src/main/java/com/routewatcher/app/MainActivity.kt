@@ -18,6 +18,7 @@ import com.routewatcher.app.data.SettingsStore
 import com.routewatcher.app.ui.theme.RouteWatcherTheme
 import com.routewatcher.app.ui.RouteWatcherApp
 import com.routewatcher.app.alarm.NotificationHelper
+import com.routewatcher.app.network.PlacesBillingConfig
 import com.google.android.libraries.places.api.Places
 
 class MainActivity : ComponentActivity() {
@@ -68,7 +69,14 @@ class MainActivity : ComponentActivity() {
     // Places SDK for the address autocomplete
     private fun initPlacesSdkIfNeeded() {
         if (BuildConfig.MAPS_API_KEY.isNotBlank() && !Places.isInitialized()) {
-            Places.initializeWithNewPlacesApiEnabled(applicationContext, BuildConfig.MAPS_API_KEY)
+            if (PlacesBillingConfig.USE_LEGACY) {
+                // Legacy billing: autocomplete session is free once terminated by any
+                // fetchPlace() call
+                Places.initialize(applicationContext, BuildConfig.MAPS_API_KEY)
+            } else {
+                // New API billing: every autocomplete keystroke is billed individually
+                Places.initializeWithNewPlacesApiEnabled(applicationContext, BuildConfig.MAPS_API_KEY)
+            }
         }
     }
 

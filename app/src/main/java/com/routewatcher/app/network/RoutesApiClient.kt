@@ -28,6 +28,7 @@ data class RouteOption(
 data class AddressPrediction(
     val primaryText: String,
     val secondaryText: String,
+    val placeId: String,
 ){
     val fullText: String get() = if (secondaryText.isBlank()) primaryText else "$primaryText, $secondaryText"
 }

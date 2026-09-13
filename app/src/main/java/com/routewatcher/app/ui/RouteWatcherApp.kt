@@ -102,8 +102,8 @@ fun RouteWatcherApp(
             },
             originPredictions = originPredictions,
             destinationPredictions = destinationPredictions,
-            onOriginPredictionSelected = { viewModel.originPredictionSelected(it) },
-            onDestinationPredictionSelected = { viewModel.destinationPredictionSelected(it) },
+            onOriginPredictionSelected = { viewModel.originPredictionSelected(context,it) },
+            onDestinationPredictionSelected = { viewModel.destinationPredictionSelected(context,it) },
             onSwap = {
                 val tmp = state.origin
                 viewModel.updateOrigin(state.destination)
