@@ -21,6 +21,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -53,6 +55,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.Dp
 import com.google.android.gms.maps.model.CameraPosition
@@ -86,6 +89,8 @@ fun RouteFormScreen(
     destinationPredictions: List<AddressPrediction>,
     onOriginPredictionSelected: (AddressPrediction) -> Unit,
     onDestinationPredictionSelected: (AddressPrediction) -> Unit,
+    onOriginFieldBlurred: () -> Unit,
+    onDestinationFieldBlurred: () -> Unit,
     onSwap: () -> Unit,
     onMoreOptions: () -> Unit,
     alternatives: List<RouteAlternative>,
@@ -166,6 +171,8 @@ fun RouteFormScreen(
             destinationPredictions = destinationPredictions,
             onOriginPredictionSelected = onOriginPredictionSelected,
             onDestinationPredictionSelected = onDestinationPredictionSelected,
+            onOriginFieldBlurred = onOriginFieldBlurred,
+            onDestinationFieldBlurred = onDestinationFieldBlurred,
             onSwap = onSwap,
             onMoreOptions = onMoreOptions,
             alternatives = alternatives,
@@ -379,6 +386,8 @@ private fun RouteFormMapArea(
     destinationPredictions: List<AddressPrediction>,
     onOriginPredictionSelected: (AddressPrediction) -> Unit,
     onDestinationPredictionSelected: (AddressPrediction) -> Unit,
+    onOriginFieldBlurred: () -> Unit,
+    onDestinationFieldBlurred: () -> Unit,
     onSwap: () -> Unit,
     onMoreOptions: () -> Unit,
     alternatives: List<RouteAlternative>,
@@ -513,13 +522,18 @@ private fun RouteFormMapArea(
                     onValueChange = onOriginChange,
                     placeholder = { Text(stringResource(R.string.origin_address)) },
                     singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                     colors = OutlinedTextFieldDefaults.colors(
                         unfocusedBorderColor = Color.Transparent,
                         focusedBorderColor = Color.Transparent,
                     ),
                     modifier = Modifier
                         .weight(1f)
-                        .onFocusChanged { originFocused = it.isFocused },
+                        .onFocusChanged {
+                            originFocused = it.isFocused
+                            if (!it.isFocused) onOriginFieldBlurred()
+                        },
                 )
                 Text(
                     "\u22EE",
@@ -555,13 +569,18 @@ private fun RouteFormMapArea(
                     onValueChange = onDestinationChange,
                     placeholder = { Text(stringResource(R.string.destination_address)) },
                     singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                     colors = OutlinedTextFieldDefaults.colors(
                         unfocusedBorderColor = Color.Transparent,
                         focusedBorderColor = Color.Transparent,
                     ),
                     modifier = Modifier
                         .weight(1f)
-                        .onFocusChanged { destinationFocused = it.isFocused },
+                        .onFocusChanged {
+                            destinationFocused = it.isFocused
+                            if (!it.isFocused) onDestinationFieldBlurred()
+                         },
                 )
                 Text(
                     "\u21C5",

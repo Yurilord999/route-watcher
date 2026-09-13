@@ -373,6 +373,45 @@ class RouteViewModel(
         }
     }
 
+    // Manual fallback when the user types an address directly instead of picking an
+    // autocomplete suggestion. No-ops if already resolved or left blank.
+    fun confirmOriginManually() {
+        val state = _editState.value ?: return
+        if (state.origin.isBlank() || state.originResolved) return
+        originSearch.job?.cancel()
+        updateEditState { it.copy(originResolved = true) }
+        fetchAlternativesIfBothResolved()
+    }
+    fun confirmDestinationManually() {
+        val state = _editState.value ?: return
+        if (state.destination.isBlank() || state.destinationResolved) return
+        destinationSearch.job?.cancel()
+        updateEditState { it.copy(destinationResolved = true) }
+        fetchAlternativesIfBothResolved()
+    }
+
+    // Swaps origin/destination text and their resolved flags together
+    fun swapOriginDestination() {
+        val state = _editState.value ?: return
+        originSearch.job?.cancel()
+        destinationSearch.job?.cancel()
+        originSearch.predictions.value = emptyList()
+        destinationSearch.predictions.value = emptyList()
+        updateEditState {
+            it.copy(
+                origin = state.destination,
+                destination = state.origin,
+                originResolved = state.destinationResolved,
+                destinationResolved = state.originResolved,
+            )
+        }
+        if (state.originResolved && state.destinationResolved) {
+            fetchAlternativesIfBothResolved()
+        } else {
+            clearRouteFormAlternatives()
+        }
+    }
+
     fun selectRouteAlternative(index: Int) {
         updateEditState { state ->
             val alt = state.alternatives.getOrNull(index) ?: return@updateEditState state
