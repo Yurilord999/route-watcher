@@ -7,6 +7,7 @@ import com.routewatcher.app.alarm.NotificationHelper
 import com.routewatcher.app.data.AppDatabase
 import com.routewatcher.app.data.SettingsStore
 import com.routewatcher.app.network.RoutesApiClient
+import com.routewatcher.app.network.TrafficErrorCode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -20,7 +21,8 @@ class CheckNowActionReceiver : BroadcastReceiver() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val dao = AppDatabase.get(context).routeDao()
-                val apiKey = SettingsStore(context).getApiKey()
+                val settingsStore = SettingsStore(context)
+                val apiKey = settingsStore.getApiKey()
                 val routes = dao.getAllEnabled()
 
                 if (apiKey.isNullOrBlank()) {
@@ -29,6 +31,10 @@ class CheckNowActionReceiver : BroadcastReceiver() {
                 }
 
                 routes.forEach { route ->
+                    if (!settingsStore.tryConsumeRoutesApiCall()) {
+                        NotificationHelper.showCheckFailed(context, route, TrafficErrorCode.API_LIMIT_REACHED)
+                        return@forEach
+                    }
                     val result = RoutesApiClient.checkTrafficOnRoute(
                         route.originAddress,
                         route.destinationAddress,

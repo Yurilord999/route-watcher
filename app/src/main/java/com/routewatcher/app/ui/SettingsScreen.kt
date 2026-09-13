@@ -9,6 +9,7 @@ import androidx.compose.ui.unit.dp
 import com.routewatcher.app.R
 import com.routewatcher.app.network.errorMessageRes
 import com.routewatcher.app.viewmodel.ApiKeyTestResult
+import com.routewatcher.app.data.RoutesApiUsage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -18,6 +19,7 @@ fun SettingsScreen(
     onClearKey: () -> Unit,
     onTestKey: () -> Unit,
     testResult: ApiKeyTestResult?,
+    routesApiUsage: RoutesApiUsage,
     onBack: () -> Unit,
 ) {
     var keyInput by remember { mutableStateOf(currentKey ?: "") }
@@ -75,6 +77,18 @@ fun SettingsScreen(
                 }
                 Text(message, style = MaterialTheme.typography.bodyMedium)
             }
+            Spacer(Modifier.height(24.dp))
+
+            // ---- Routes API monthly usage ----
+            Text(
+                stringResource(R.string.settings_api_usage_label, routesApiUsage.count, routesApiUsage.limit),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Spacer(Modifier.height(8.dp))
+            LinearProgressIndicator(
+                progress = { (routesApiUsage.count.toFloat() / routesApiUsage.limit).coerceIn(0f, 1f) },
+                modifier = Modifier.fillMaxWidth(),
+            )
             Spacer(Modifier.height(24.dp))
 
             // ---- navigation ----

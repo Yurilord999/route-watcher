@@ -6,6 +6,7 @@
     <string name="route_direction_summary">%1$s → %2$s</string>
     <string name="save_route">Save route</string>
     <string name="cancel">Cancel</string>
+    <string name="ok">OK</string>
     <string name="api_key_label">Google Maps API key</string>
     <string name="back">Back</string>
     <string name="delete_route">Delete route</string>
@@ -63,6 +64,8 @@
     <string name="error_network">Network error</string>
     <string name="error_no_route_returned">No route returned</string>
     <string name="error_unknown">Unknown error</string>
+    <string name="error_api_limit_reached">Request limit has been reached; please try again later</string>
+    <string name="settings_api_usage_label">%1$d / %2$d requests used this month</string>
 
     <!-- Settings - test key result -->
     <string name="test_key_success">Key works. Test route: %1$d min.</string>

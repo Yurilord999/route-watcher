@@ -17,6 +17,7 @@ enum class TrafficErrorCode {
     EMPTY_RESPONSE,
     NETWORK_ERROR,
     NO_ROUTE_RETURNED,
+    API_LIMIT_REACHED,
 }
 
 // Shared mapping so the wording lives in one place
@@ -26,5 +27,6 @@ fun errorMessageRes(code: TrafficErrorCode?): Int = when (code) {
     TrafficErrorCode.EMPTY_RESPONSE -> R.string.error_empty_response
     TrafficErrorCode.NETWORK_ERROR -> R.string.error_network
     TrafficErrorCode.NO_ROUTE_RETURNED -> R.string.error_no_route_returned
+    TrafficErrorCode.API_LIMIT_REACHED -> R.string.error_api_limit_reached
     null -> R.string.error_unknown
 }

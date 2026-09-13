@@ -102,7 +102,11 @@ object NotificationHelper {
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setAutoCancel(true)
             .setContentIntent(
-                if (errorCode == TrafficErrorCode.NO_API_KEY) openSettingsIntent(context) else openAppIntent(context)
+                if (errorCode == TrafficErrorCode.NO_API_KEY || errorCode == TrafficErrorCode.API_LIMIT_REACHED) {
+                    openSettingsIntent(context)
+                } else {
+                    openAppIntent(context)
+                }
             )
             .build()
         notifyIfPermitted(context, route.id.toInt() * 10 + 3, n)

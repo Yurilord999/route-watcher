@@ -8,11 +8,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.Text
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.routewatcher.app.data.RouteDao
 import com.routewatcher.app.data.SettingsStore
 import com.routewatcher.app.viewmodel.RouteViewModel
 import com.routewatcher.app.viewmodel.RouteViewModelFactory
+import com.routewatcher.app.R
 
 // Screen the app is currently showing
 private sealed class Screen {
@@ -56,6 +61,11 @@ fun RouteWatcherApp(
         viewModel.autoExpandRouteId.collect { routeId -> pendingExpandRouteId = routeId }
     }
 
+    var showApiLimitDialog by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        viewModel.apiLimitReachedEvents.collect { showApiLimitDialog = true }
+    }
+    val routesApiUsage by viewModel.routesApiUsage.collectAsState()
     val originPredictions by viewModel.originPredictions.collectAsState()
     val destinationPredictions by viewModel.destinationPredictions.collectAsState()
 
@@ -72,7 +82,10 @@ fun RouteWatcherApp(
                 if (enabled) onRequestExactAlarmPermission()
                 viewModel.toggleRoute(context, route, enabled)
             },
-            onOpenSettings = { screen = Screen.Settings },
+            onOpenSettings = {
+                viewModel.refreshRoutesApiUsage()
+                screen = Screen.Settings
+            },
             checkStatuses = checkStatuses,
             onCheckNow = { viewModel.checkRouteNow(it) },
             onUpdateActiveDays = { route, activeDays -> viewModel.updateActiveDays(context, route, activeDays) },
@@ -86,6 +99,7 @@ fun RouteWatcherApp(
             onClearKey = { viewModel.clearApiKey() },
             onTestKey = { viewModel.testApiKey() },
             testResult = testResult,
+            routesApiUsage = routesApiUsage,
             onBack = { screen = Screen.List },
         )
 
@@ -169,6 +183,17 @@ fun RouteWatcherApp(
                 settingsStore.setHasSeenOnboarding(true)
                 screen = Screen.List
             },
+        )
+    }
+    if (showApiLimitDialog) {
+        AlertDialog(
+            onDismissRequest = { showApiLimitDialog = false },
+            confirmButton = {
+                TextButton(onClick = { showApiLimitDialog = false }) {
+                    Text(stringResource(R.string.ok))
+                }
+            },
+            text = { Text(stringResource(R.string.error_api_limit_reached)) },
         )
     }
 }

@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.routewatcher.app.data.RouteDao
 import com.routewatcher.app.data.RouteEntity
 import com.routewatcher.app.data.SettingsStore
+import com.routewatcher.app.data.RoutesApiUsage
 import com.routewatcher.app.alarm.AlarmScheduler
 import com.routewatcher.app.network.RoutesApiClient
 import com.routewatcher.app.network.RouteOption
@@ -74,10 +75,32 @@ class RouteViewModel(
     private val _autoExpandRouteId = MutableSharedFlow<Long>()
     val autoExpandRouteId: SharedFlow<Long> = _autoExpandRouteId.asSharedFlow()
 
+    private val _apiLimitReachedEvents = MutableSharedFlow<Unit>()
+    val apiLimitReachedEvents: SharedFlow<Unit> = _apiLimitReachedEvents.asSharedFlow()
+
+    private val _routesApiUsage = MutableStateFlow(settingsStore.getRoutesApiUsage())
+    val routesApiUsage: StateFlow<RoutesApiUsage> = _routesApiUsage.asStateFlow()
+
+    fun refreshRoutesApiUsage() {
+        _routesApiUsage.value = settingsStore.getRoutesApiUsage()
+    }
+
+    // Shared gate for every billed Routes API call site
+    private fun tryConsumeRoutesApiCall(): Boolean {
+        val allowed = settingsStore.tryConsumeRoutesApiCall()
+        refreshRoutesApiUsage()
+        return allowed
+    }
+
     // Instant check (in app)
     fun checkRouteNow(route: RouteEntity) {
         _checkStatuses.value = _checkStatuses.value + (route.id to RouteCheckStatus.Loading)
         viewModelScope.launch(Dispatchers.IO) {
+            if (!tryConsumeRoutesApiCall()) {
+                val limitResult = TrafficResult(success = false, errorCode = TrafficErrorCode.API_LIMIT_REACHED)
+                _checkStatuses.value = _checkStatuses.value + (route.id to RouteCheckStatus.Done(limitResult))
+                return@launch
+            }
             val result = RoutesApiClient.checkTrafficOnRoute(
                 route.originAddress,
                 route.destinationAddress,
@@ -133,6 +156,10 @@ class RouteViewModel(
     fun testApiKey() {
         val key = _apiKey.value
         viewModelScope.launch(Dispatchers.IO) {
+            if (!tryConsumeRoutesApiCall()) {
+                _testResult.value = ApiKeyTestResult(success = false, errorCode = TrafficErrorCode.API_LIMIT_REACHED)
+                return@launch
+            }
             val result = RoutesApiClient.checkTrafficOnRoute(
                 "Dresden Hauptbahnhof, Dresden",
                 "Frauenkirche Dresden, Dresden",
@@ -346,6 +373,10 @@ class RouteViewModel(
     fun fetchRouteFormAlternatives(originAddress: String, destinationAddress: String) {
         routeFormAlternativesJob?.cancel()
         routeFormAlternativesJob = viewModelScope.launch(Dispatchers.IO) {
+            if (!tryConsumeRoutesApiCall()) {
+                _apiLimitReachedEvents.emit(Unit)
+                return@launch
+            }
             val key = settingsStore.getApiKey() ?: ""
             val options = RoutesApiClient.fetchRouteAlternatives(originAddress, destinationAddress, key)
             val alternatives = options.map { option ->
@@ -479,6 +510,11 @@ class RouteViewModel(
             _stopsEditorState.value = _stopsEditorState.value?.copy(isRecomputing = true)
             delay(600) //milliseconds
             val current = _stopsEditorState.value ?: return@launch
+            if (!tryConsumeRoutesApiCall()) {
+                _stopsEditorState.value = _stopsEditorState.value?.copy(isRecomputing = false)
+                _apiLimitReachedEvents.emit(Unit)
+                return@launch
+            }
             val key = settingsStore.getApiKey() ?: ""
             val result = withContext(Dispatchers.IO) {
                 RoutesApiClient.fetchRouteThroughStops(current.origin, current.destination, current.stops, key)

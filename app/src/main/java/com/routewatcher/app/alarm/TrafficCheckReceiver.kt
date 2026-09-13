@@ -39,10 +39,13 @@ class TrafficCheckReceiver : BroadcastReceiver() {
     private suspend fun runCheck(context: Context, routeId: Long, offsetMinutes: Int) {
         val dao = AppDatabase.get(context).routeDao()
         val route = dao.getById(routeId) ?: return
-        val apiKey = SettingsStore(context).getApiKey()
+        val settingsStore = SettingsStore(context)
+        val apiKey = settingsStore.getApiKey()
 
         if (apiKey.isNullOrBlank()) {
-            NotificationHelper.showCheckFailed(context, route,TrafficErrorCode.NO_API_KEY)
+            NotificationHelper.showCheckFailed(context, route, TrafficErrorCode.NO_API_KEY)
+        } else if (!settingsStore.tryConsumeRoutesApiCall()) {
+            NotificationHelper.showCheckFailed(context, route, TrafficErrorCode.API_LIMIT_REACHED)
         } else {
             val result = RoutesApiClient.checkTrafficOnRoute(
                 route.originAddress,
