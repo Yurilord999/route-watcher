@@ -24,26 +24,29 @@ automatic traffic checks, manual check via widget, notifications.
 16. Minimap - an expandable, interactive map for each route. Shows traffic congestion.
 17. Handoffs - "Open in Google Maps" button & jam detection handling for notifications / in app 
     (Deep-link to auto-expanded, congested route)
+18. RouteFormScreen - Add/edit form overhaul: autocompleted routes, interactive map menu, etc.
+19. Places API toggle - Legacy/New can easily be swapped now. 
+20. Routes API usage cap - Limits monthly uses within Googles free tier. + progress bar
 
 ## Next up
-Add/Edit form UI overhaul
+Time picker UI overhaul
 
 ## Known limitations / redesign considerations
 - Polyline has no native drag support. Editing route through dragging is out of scope for now. 
 - Googles routing quality for nearby/short-distance custom stops is very bad.
   Probably limited routes API behavior. 
   Potential future workarounds: distance sanity checking a returned route before showing it?
-- Add/edit form has considerable downsides: no route autocomplete, no visual feedback etc.
-  Combining it with Places SDK for one-screen solution (visual route picking & autocomplete)  
+-
 
 ## Improvement backlog
 - Replace raw hour/minute text fields in AddEditRouteScreen with a real time picker
 - Add a Quick Settings Tile as an alternative to the home screen widget
 - Full widget overhaul
-- Cap API requests per day/month as a safeguard within Googles free tier
 - Marker drag is super clunky, takes too long. Needs a custom touch
   listener/hit testing layer (Maps SDK has no drag timing setting)
 - Route list fold/unfold smooth sliding transition
 - Long origin/destination address truncation required
 - GPS location features
+- RouteEditState refactor: RouteFormScreen/RouteFormMapArea/RouteFormSheetContent/
+  RouteListScreen/RouteRow each re-decompose a single state object
 - General UI/visual polish needed
