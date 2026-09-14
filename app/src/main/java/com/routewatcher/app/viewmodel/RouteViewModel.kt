@@ -213,8 +213,7 @@ class RouteViewModel(
         updateEditState { it.copy(destination = value, destinationResolved = false) }
         clearRouteFormAlternatives()
     }
-    fun updateHour(value: String) = updateEditState { it.copy(hour = value) }
-    fun updateMinute(value: String) = updateEditState { it.copy(minute = value) }
+    fun setDepartureTime(hour: Int, minute: Int) = updateEditState { it.copy(hour = hour, minute = minute) }
     fun updateOffsets(value: String) = updateEditState { it.copy(offsets = value) }
     fun updateThreshold(value: String) = updateEditState { it.copy(threshold = value) }
     fun updateActiveDays(value: Int) = updateEditState { it.copy(activeDays = value) }
@@ -230,8 +229,8 @@ class RouteViewModel(
             name = state.name.ifBlank { "Route" },
             originAddress = state.origin,
             destinationAddress = state.destination,
-            departureHour = state.hour.toIntOrNull()?.coerceIn(0, 23) ?: 8,
-            departureMinute = state.minute.toIntOrNull()?.coerceIn(0, 59) ?: 0,
+            departureHour = state.hour,
+            departureMinute = state.minute,
             checkOffsetsMinutes = state.offsets.ifBlank { "30" },
             delayThresholdMinutes = state.threshold.toIntOrNull() ?: 10,
             activeDays = state.activeDays,

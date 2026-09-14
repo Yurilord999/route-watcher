@@ -98,10 +98,12 @@ fun RouteFormScreen(
     onAlternativeSelected: (Int) -> Unit,
     name: String,
     onNameChange: (String) -> Unit,
-    hour: String,
-    onHourChange: (String) -> Unit,
-    minute: String,
-    onMinuteChange: (String) -> Unit,
+    hour: Int,
+    minute: Int,
+    favoriteTimes: List<FavoriteTime>,
+    onSelectTime: (FavoriteTime) -> Unit,
+    onAddFavoriteTime: (FavoriteTime) -> Unit,
+    onDeleteFavoriteTimes: (Set<FavoriteTime>) -> Boolean,
     activeDays: Int,
     onActiveDaysChange: (Int) -> Unit,
     offsets: String,
@@ -145,9 +147,11 @@ fun RouteFormScreen(
                     name = name,
                     onNameChange = onNameChange,
                     hour = hour,
-                    onHourChange = onHourChange,
                     minute = minute,
-                    onMinuteChange = onMinuteChange,
+                    favoriteTimes = favoriteTimes,
+                    onSelectTime = onSelectTime,
+                    onAddFavoriteTime = onAddFavoriteTime,
+                    onDeleteFavoriteTimes = onDeleteFavoriteTimes,
                     activeDays = activeDays,
                     onActiveDaysChange = onActiveDaysChange,
                     offsets = offsets,
@@ -193,10 +197,12 @@ private fun RouteFormSheetContent(
     onAddStops: () -> Unit,
     name: String,
     onNameChange: (String) -> Unit,
-    hour: String,
-    onHourChange: (String) -> Unit,
-    minute: String,
-    onMinuteChange: (String) -> Unit,
+    hour: Int,
+    minute: Int,
+    favoriteTimes: List<FavoriteTime>,
+    onSelectTime: (FavoriteTime) -> Unit,
+    onAddFavoriteTime: (FavoriteTime) -> Unit,
+    onDeleteFavoriteTimes: (Set<FavoriteTime>) -> Boolean,
     activeDays: Int,
     onActiveDaysChange: (Int) -> Unit,
     offsets: String,
@@ -245,19 +251,26 @@ private fun RouteFormSheetContent(
         Spacer(Modifier.height(24.dp))
 
         // ---- departure time ----
-        Row {
-            OutlinedTextField(
-                value = hour,
-                onValueChange = { onHourChange(it.filter { c -> c.isDigit() }) },
-                label = { Text(stringResource(R.string.departure_hour)) },
-                modifier = Modifier.weight(1f),
-            )
-            Spacer(Modifier.width(8.dp))
-            OutlinedTextField(
-                value = minute,
-                onValueChange = { onMinuteChange(it.filter { c -> c.isDigit() }) },
-                label = { Text(stringResource(R.string.departure_minute)) },
-                modifier = Modifier.weight(1f),
+        var showTimeDialog by remember { mutableStateOf(false) }
+        TimeTileRow(
+            currentHour = hour,
+            currentMinute = minute,
+            favorites = favoriteTimes,
+            onSelectTime = onSelectTime,
+            onAddTimeRequested = { showTimeDialog = true },
+            onDeleteTimes = onDeleteFavoriteTimes,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        if (showTimeDialog) {
+            DepartureTimeDialog(
+                initialHour = hour,
+                initialMinute = minute,
+                onConfirm = { h, m, save ->
+                    onSelectTime(FavoriteTime(h, m))
+                    if (save) onAddFavoriteTime(FavoriteTime(h, m))
+                    showTimeDialog = false
+                },
+                onDismiss = { showTimeDialog = false },
             )
         }
         Spacer(Modifier.height(8.dp))

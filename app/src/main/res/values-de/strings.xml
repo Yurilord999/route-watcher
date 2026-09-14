@@ -20,8 +20,9 @@
     <string name="route_name">Routenname</string>
     <string name="origin_address">Startadresse</string>
     <string name="destination_address">Zieladresse</string>
-    <string name="departure_hour">Stunde (0-23)</string>
-    <string name="departure_minute">Minute</string>
+    <string name="time_tile_hint">Kachel lange drücken zum Auswählen. Andere antippen zum Hinzufügen. Löschen-Taste zum Entfernen.</string>
+    <string name="time_tile_delete_current_blocked">Die aktuelle Zeit deiner Route kann nicht entfernt werden — wähle zuerst eine andere Zeit.</string>
+    <string name="save_as_quick_pick">Als Schnellauswahl speichern</string>
     <string name="route_active_days">Aktive Tage</string>
     <string name="preset_full_week">Jeden Tag</string>
     <string name="preset_weekdays">Wochentage</string>
