@@ -9,6 +9,9 @@ import java.util.Calendar
 // snapshot of this months Routes API usage against the free tier limit (5k)
 data class RoutesApiUsage(val count: Int, val limit: Int)
 
+// Saved departure time quick pick.
+data class FavoriteTime(val hour: Int, val minute: Int)
+
 // Stores the users personal Google Maps API key locally.
 // Encrypted with a key held in the Android Keystore. Nothing here should leave the device.
 class SettingsStore(context: Context) {
@@ -73,11 +76,39 @@ class SettingsStore(context: Context) {
         val calendar = Calendar.getInstance()
         return "${calendar.get(Calendar.YEAR)}-${calendar.get(Calendar.MONTH)}"
     }
+
+    fun getFavoriteTimes(): List<FavoriteTime> =
+        prefs.getString(KEY_FAVORITE_TIMES, null)
+            ?.split(";")
+            ?.mapNotNull { pair ->
+                val parts = pair.split(",")
+                val hour = parts.getOrNull(0)?.trim()?.toIntOrNull()
+                val minute = parts.getOrNull(1)?.trim()?.toIntOrNull()
+                if (hour != null && minute != null) FavoriteTime(hour, minute) else null
+            }
+            ?: emptyList()
+
+    fun addFavoriteTime(time: FavoriteTime) {
+        val current = getFavoriteTimes()
+        if (time in current) return
+        saveFavoriteTimes(current + time)
+    }
+
+    fun removeFavoriteTimes(times: Set<FavoriteTime>) {
+        saveFavoriteTimes(getFavoriteTimes().filterNot { it in times })
+    }
+
+    private fun saveFavoriteTimes(times: List<FavoriteTime>) {
+        val encoded = times.joinToString(";") { "${it.hour},${it.minute}" }
+        prefs.edit().putString(KEY_FAVORITE_TIMES, encoded).apply()
+    }
+
     companion object {
         private const val KEY_API_KEY = "google_maps_api_key"
         private const val KEY_HAS_SEEN_ONBOARDING = "has_seen_onboarding"
         private const val KEY_ROUTES_API_CALL_COUNT = "routes_api_call_count"
         private const val KEY_ROUTES_API_CALL_MONTH = "routes_api_call_month"
+        private const val KEY_FAVORITE_TIMES = "favorite_times"
 
         // Googles real free tier is 5000/month
         const val ROUTES_API_MONTHLY_LIMIT = 4900

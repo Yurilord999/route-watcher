@@ -73,6 +73,7 @@ import com.routewatcher.app.network.RouteOption
 import com.routewatcher.app.network.AddressPrediction
 import com.routewatcher.app.network.RouteAlternative
 import com.routewatcher.app.data.RouteEntity
+import com.routewatcher.app.data.FavoriteTime
 
 private val DRESDEN_HAUPTBAHNHOF = LatLng(51.0405, 13.7325)
 

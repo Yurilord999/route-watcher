@@ -69,8 +69,7 @@ fun RouteWatcherApp(
     val originPredictions by viewModel.originPredictions.collectAsState()
     val destinationPredictions by viewModel.destinationPredictions.collectAsState()
 
-    // Temporary! Prototype only, favorites live in local compose state for now
-    var prototypeFavorites by remember { mutableStateOf(listOf(FavoriteTime(7, 0), FavoriteTime(8, 0))) }
+    val favoriteTimes by viewModel.favoriteTimes.collectAsState()
 
     when (screen) {
         is Screen.List -> RouteListScreen(
@@ -132,16 +131,10 @@ fun RouteWatcherApp(
             onNameChange = { viewModel.updateName(it) },
             hour = state.hour,
             minute = state.minute,
-            favoriteTimes = prototypeFavorites,
+            favoriteTimes = favoriteTimes,
             onSelectTime = { viewModel.setDepartureTime(it.hour, it.minute) },
-            onAddFavoriteTime = { time ->
-                if (time !in prototypeFavorites) prototypeFavorites = prototypeFavorites + time
-            },
-            onDeleteFavoriteTimes = { toDelete ->
-                val blocked = toDelete.any { it.hour == state.hour && it.minute == state.minute }
-                prototypeFavorites = prototypeFavorites.filterNot { it in toDelete && !(it.hour == state.hour && it.minute == state.minute) }
-                blocked
-            },
+            onAddFavoriteTime = { viewModel.addFavoriteTime(it) },
+            onDeleteFavoriteTimes = { viewModel.deleteFavoriteTimes(it) },
             activeDays = state.activeDays,
             onActiveDaysChange = { viewModel.updateActiveDays(it) },
             offsets = state.offsets,

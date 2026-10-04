@@ -34,9 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.routewatcher.app.R
-
-// Saved quick pick time & routes current time
-data class FavoriteTime(val hour: Int, val minute: Int)
+import com.routewatcher.app.data.FavoriteTime
 
 // AM/PM format
 //private fun FavoriteTime.label(): String {
@@ -139,15 +137,13 @@ fun TimeTileRow(
                 }
             }
         }
-        Text(
-            text = if (showBlockedNotice) {
-                stringResource(R.string.time_tile_delete_current_blocked)
-            } else {
-                stringResource(R.string.time_tile_hint)
-            },
-            style = MaterialTheme.typography.bodySmall,
-            color = if (showBlockedNotice) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        if (showBlockedNotice) {
+            Text(
+                text = stringResource(R.string.time_tile_delete_current_blocked),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+            )
+        }
     }
 }
 

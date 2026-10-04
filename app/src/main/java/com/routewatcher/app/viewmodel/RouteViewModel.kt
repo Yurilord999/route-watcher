@@ -8,6 +8,7 @@ import com.routewatcher.app.data.RouteDao
 import com.routewatcher.app.data.RouteEntity
 import com.routewatcher.app.data.SettingsStore
 import com.routewatcher.app.data.RoutesApiUsage
+import com.routewatcher.app.data.FavoriteTime
 import com.routewatcher.app.alarm.AlarmScheduler
 import com.routewatcher.app.network.RoutesApiClient
 import com.routewatcher.app.network.RouteOption
@@ -83,6 +84,29 @@ class RouteViewModel(
 
     fun refreshRoutesApiUsage() {
         _routesApiUsage.value = settingsStore.getRoutesApiUsage()
+    }
+
+    private val _favoriteTimes = MutableStateFlow(settingsStore.getFavoriteTimes())
+    val favoriteTimes: StateFlow<List<FavoriteTime>> = _favoriteTimes.asStateFlow()
+
+    fun addFavoriteTime(time: FavoriteTime) {
+        settingsStore.addFavoriteTime(time)
+        _favoriteTimes.value = settingsStore.getFavoriteTimes()
+    }
+
+    // Returns true if the edited routes time is among the requested deletions
+    // (never removed, every route always needs a time)
+    fun deleteFavoriteTimes(times: Set<FavoriteTime>): Boolean {
+        val state = _editState.value
+        val blocked = state != null && times.any { it.hour == state.hour && it.minute == state.minute }
+        val toRemove = if (state != null) {
+            times.filterNot { it.hour == state.hour && it.minute == state.minute }.toSet()
+        } else {
+            times
+        }
+        settingsStore.removeFavoriteTimes(toRemove)
+        _favoriteTimes.value = settingsStore.getFavoriteTimes()
+        return blocked
     }
 
     // Shared gate for every billed Routes API call site
